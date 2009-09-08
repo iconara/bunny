@@ -106,8 +106,37 @@ describe Bunny do
 		5.times {q.publish('Yet another test message')}
 		q.message_count.should == 5
 		q.subscribe(:message_max => 5){|msg| x = 1}
-		q.unsubscribe.should == :unsubscribe_ok
 	end
+
+  it "should finish processing subscription messages if unsubscribe is called in block" do
+    q = @b.queue('test1')
+    q.publish('messages in my quezen')
+
+    q.subscribe do |msg|
+      msg.should == 'messages in my quezen'
+
+      q.unsubscribe
+    end
+
+    5.times {|i| q.publish("#{i}")}
+    q.subscribe do |msg|
+      q.unsubscribe if msg == '4'
+    end
+  end
+
+  it "should check block parameters to know what values pass through on subscribe" do
+    q = @b.queue('test1')
+    q.publish('messages pop\'n')
+
+    q.subscribe do |header, msg, args|
+      header.should be_an_instance_of Qrack::Protocol::Header
+      msg.should == "messages pop'n"
+      args.should_not be_nil
+
+      q.unsubscribe
+    end
+
+  end
 
 	it "should be able to be deleted" do
 		q = @b.queue('test1')
