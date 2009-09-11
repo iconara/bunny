@@ -95,9 +95,8 @@ describe Bunny do
 		q = @b.queue('test1')
 		5.times {q.publish('Yet another test message')}
 		q.message_count.should == 5
-		q.subscribe(:message_max => 0){|msg| x = 1}
+		q.subscribe(:message_max => 0)
 		q.message_count.should == 5
-		q.unsubscribe.should == :unsubscribe_ok
 		q.purge.should == :purge_ok
 	end
 	
@@ -105,37 +104,50 @@ describe Bunny do
 		q = @b.queue('test1')
 		5.times {q.publish('Yet another test message')}
 		q.message_count.should == 5
-		q.subscribe(:message_max => 5){|msg| x = 1}
+		q.subscribe(:message_max => 5)
+	end
+	
+	it "should stop subscription after processing message_max messages < total in queue" do
+		@b.qos()
+		q = @b.queue('test1')
+		10.times {q.publish('Yet another test message')}
+		q.message_count.should == 10
+		q.subscribe(:message_max => 5, :ack => true)
+		q.message_count.should == 5
+		q.purge.should == :purge_ok
 	end
 
-  it "should finish processing subscription messages if unsubscribe is called in block" do
+  it "should pass correct block parameters through on subscribe" do
+    q = @b.queue('test1')
+    q.publish("messages pop\'n")
+
+    q.subscribe do |msg|
+      msg[:header].should be_an_instance_of Qrack::Protocol::Header
+      msg[:payload].should == "messages pop'n"
+      msg[:delivery_details].should_not be_nil
+			msg[:queue].should == q
+
+      q.unsubscribe
+			break
+    end
+
+  end
+
+  it "should finish processing subscription messages if break is called in block" do
     q = @b.queue('test1')
     q.publish('messages in my quezen')
 
     q.subscribe do |msg|
-      msg.should == 'messages in my quezen'
-
+      msg[:payload].should == 'messages in my quezen'
       q.unsubscribe
+			break
     end
 
     5.times {|i| q.publish("#{i}")}
     q.subscribe do |msg|
-      q.unsubscribe if msg == '4'
+      q.unsubscribe if msg[:payload] == '4'
+			break
     end
-  end
-
-  it "should check block parameters to know what values pass through on subscribe" do
-    q = @b.queue('test1')
-    q.publish('messages pop\'n')
-
-    q.subscribe do |header, msg, args|
-      header.should be_an_instance_of Qrack::Protocol::Header
-      msg.should == "messages pop'n"
-      args.should_not be_nil
-
-      q.unsubscribe
-    end
-
   end
 
 	it "should be able to be deleted" do

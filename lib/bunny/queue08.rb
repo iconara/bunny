@@ -18,7 +18,7 @@ Queues must be attached to at least one exchange in order to receive messages fr
 	    @client = client
 	    @opts   = opts
       @delivery_tag = nil
-      @consumer_tag = nil
+      @subscription = nil
 
       # Queues without a given name are named by the server and are generally
       # bound to the process that created them.
@@ -293,16 +293,23 @@ the server will not send any more messages for that consumer.
 =end
 		
 		def unsubscribe(opts = {})
+			# Default consumer_tag from subscription if not passed in
+			consumer_tag = subscription ? subscription.consumer_tag : opts[:consumer_tag]
 			
+			# Must have consumer tag to tell server what to unsubscribe
 			raise Bunny::UnsubscribeError,
-				"No consumer tag received" if !opts[:consumer_tag]
+				"No consumer tag received" if !consumer_tag
 			
       # Cancel consumer
-      client.send_frame( Qrack::Protocol::Basic::Cancel.new(:consumer_tag => opts[:consumer_tag]))
+      client.send_frame( Qrack::Protocol::Basic::Cancel.new(:consumer_tag => consumer_tag,
+																														:nowait => false))
 
       raise Bunny::UnsubscribeError,
         "Error unsubscribing from queue #{name}" unless
         client.next_method.is_a?(Qrack::Protocol::Basic::CancelOk)
+
+			# Reset subscription
+			@subscription = nil
 				
 			# Return confirmation
 			:unsubscribe_ok

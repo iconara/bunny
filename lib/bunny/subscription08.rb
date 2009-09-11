@@ -11,8 +11,8 @@ processing. If error occurs, _Bunny_::_ProtocolError_ is raised.
 
 ==== OPTIONS:
 * <tt>:consumer_tag => '_tag_'</tt> - Specifies the identifier for the consumer. The consumer tag is
-  local to a connection, so two clients can use the same consumer tags. If this field is empty a
-  server generated name is used.
+  local to a connection, so two clients can use the same consumer tags. If this option is not
+  specified a server generated name is used.
 * <tt>:no_ack=> true (_default_) or false</tt> - If set to _true_, the server does not expect an
   acknowledgement message from the client. If set to _false_, the server expects an acknowledgement
   message from the client and will re-queue the message if it does not receive one within a time specified
@@ -61,6 +61,9 @@ If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
 		
 			# Initialize message counter
 			@message_count = 0
+			
+			# Give queue reference to this subscription
+			@queue.subscription = self 
 		
 		end
 	
@@ -85,13 +88,13 @@ If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
 		end
 	
 		def start(&blk)
-			# Notify server about new consumer
-			setup_consumer
-		
 			# Do not process any messages if zero message_max
 			if message_max == 0
 				return
 			end
+			
+			# Notify server about new consumer
+			setup_consumer
 
 			# Start subscription loop
 			loop do
