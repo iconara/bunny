@@ -11,6 +11,7 @@ module Bunny
 	class ServerDownError < StandardError; end
 	class ConnectionError < StandardError; end
 	class MessageError < StandardError; end
+	class UnsubscribeError < StandardError; end
 	
 	VERSION = '0.5.3'
 	
@@ -60,6 +61,7 @@ module Bunny
 			require 'bunny/exchange08'
 			require 'bunny/queue08'
 			require 'bunny/channel08'
+			require 'bunny/subscription08'
 			
 			@client = Bunny::Client.new(opts)
 		else

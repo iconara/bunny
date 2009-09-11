@@ -65,7 +65,7 @@ ask to confirm a single message or a set of messages up to and including a speci
 	
 		def ack(opts={})
 			# If delivery tag is nil then set it to 1 to prevent errors
-			self.delivery_tag = 1 if self.delivery_tag.nil?
+			self.delivery_tag = opts[:delivery_tag] || 1
 			
       client.send_frame(
         Qrack::Protocol::Basic::Ack.new({:delivery_tag => delivery_tag, :multiple => false}.merge(opts))
@@ -267,118 +267,11 @@ Returns hash {:message_count, :consumer_count}.
 	    {:message_count => method.message_count, :consumer_count => method.consumer_count}
 	  end
 
-=begin rdoc
-
-=== DESCRIPTION:
-
-Asks the server to start a "consumer", which is a transient request for messages from a specific
-queue. Consumers last as long as the channel they were created on, or until the client cancels them
-with an _unsubscribe_. Every time a message reaches the queue it is passed to the _blk_ for
-processing. If error occurs, _Bunny_::_ProtocolError_ is raised.
-
-==== OPTIONS:
-* <tt>:consumer_tag => '_tag_'</tt> - Specifies the identifier for the consumer. The consumer tag is
-  local to a connection, so two clients can use the same consumer tags. If this field is empty a
-  server generated name is used.
-* <tt>:no_ack=> true (_default_) or false</tt> - If set to _true_, the server does not expect an
-  acknowledgement message from the client. If set to _false_, the server expects an acknowledgement
-  message from the client and will re-queue the message if it does not receive one within a time specified
-  by the server.
-* <tt>:exclusive => true or false (_default_)</tt> - Request exclusive consumer access, meaning
-  only this consumer can access the queue.
-* <tt>:nowait => true or false (_default_)</tt> - Ignored by Bunny, always _false_.
-* <tt>:timeout => number of seconds - The subscribe loop will continue to wait for
-  messages until terminated (Ctrl-C or kill command) or this timeout interval is reached.
-* <tt>:message_max => max number messages to process</tt> - When the required number of messages
-  is processed subscribe loop is exited.
-
-==== RETURNS:
-
-It is possible to get the headers as well as the message by changing the number of parameters to the
-block given to subscribe.
-
-Example subscription for just the message:
-  queue.subscribe do |message|
-    # handle_message
-  end
-
-Example subscription for headers, message and args:
-  queue.subscribe do |headers, message, details|
-    # handle message
-  end
-
-<tt>details</tt> is a hash containing <tt>{:consumer_tag, :delivery_tag, :redelivered, :exchange, :routing_key}</tt>.
-If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
-
-=end
 	
     def subscribe(opts = {}, &blk)
-      # Get maximum amount of messages to process
-      message_max = opts[:message_max] || nil
-      return if message_max == 0
-
-      # If a consumer tag is not passed in the server will generate one
-      consumer_tag = opts[:consumer_tag] || nil
-
-      # ignore the :nowait option if passed, otherwise program will hang waiting for a
-      # response from the server causing an error.
-      opts.delete(:nowait)
-
-      # do we want to have to provide an acknowledgement?
-      ack = opts.delete(:ack)
-
-			client.send_frame(
-				Qrack::Protocol::Basic::Consume.new({
-          :queue => name,
-          :consumer_tag => consumer_tag,
-          :no_ack => !ack,
-          :nowait => false
-        }.merge(opts)
-      ))
-			
-      reply = client.next_method
-      if(!reply.is_a?(Qrack::Protocol::Basic::ConsumeOk))
-        raise Bunny::ProtocolError, "Error subscribing to queue #{name}"
-      end
-
-      # Store the consumer tag to allow for unsubscription later
-      @consumer_tag = reply.consumer_tag
-
-      # Initialize message counter
-      counter = 0
-
-      loop do
-        method = client.next_method(:timeout => opts[:timeout])
-
-        if method.is_a?(Qrack::Protocol::Basic::CancelOk)
-          @consumer_tag = nil
-          break
-        end
-
-        # get delivery tag to use for acknowledge
-        self.delivery_tag = method.delivery_tag if ack
-
-        header = client.next_payload
-
-        # If maximum frame size is smaller than message payload body then message
-        # will have a message header and several message bodies
-        msg = ''
-        while msg.length < header.size
-          msg += client.next_payload
-        end
-
-        # pass the message and related info, if requested, to the block for processing
-        blk.arity == 1 ?
-          blk.call(msg) :
-          blk.call(header, msg, method.arguments)
-
-        # Increment message counter
-        counter += 1
-
-        # Unsubscribe from the queue if we've reached our expected number of messages
-        unsubscribe if(counter == message_max)
-      end
-			
+			# Create subscription
+			s = Bunny::Subscription.new(client, self, opts)
+			s.start(&blk)
 		end
 		
 =begin rdoc
@@ -400,29 +293,20 @@ the server will not send any more messages for that consumer.
 =end
 		
 		def unsubscribe(opts = {})
-			consumer_tag = opts[:consumer_tag] || @consumer_tag
 			
-			# ignore the :nowait option if passed, otherwise program will hang waiting for a
-			# response from the server causing an error
-			opts.delete(:nowait)
+			raise Bunny::UnsubscribeError,
+				"No consumer tag received" if !opts[:consumer_tag]
 			
-      # noop if we don't have a consumer_tag.
-      if(consumer_tag)
-        client.send_frame( Qrack::Protocol::Basic::Cancel.new({
-          :consumer_tag => consumer_tag
-        }.merge(opts)))
+      # Cancel consumer
+      client.send_frame( Qrack::Protocol::Basic::Cancel.new(:consumer_tag => opts[:consumer_tag]))
 
-        # HACK: Don't wait for the response if the consumer we're canceling is local since it
-        #       will be handled in the subscribe loop.
-        if(consumer_tag != @consumer_tag)
-          raise Bunny::ProtocolError,
-            "Error unsubscribing from queue #{name}" unless
-            client.next_method.is_a?(Qrack::Protocol::Basic::CancelOk)
-        end
-      end
+      raise Bunny::UnsubscribeError,
+        "Error unsubscribing from queue #{name}" unless
+        client.next_method.is_a?(Qrack::Protocol::Basic::CancelOk)
 				
-			# return confirmation
+			# Return confirmation
 			:unsubscribe_ok
+			
     end
 
 =begin rdoc
