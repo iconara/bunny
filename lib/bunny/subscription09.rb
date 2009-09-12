@@ -32,7 +32,7 @@ If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
 
 =end
 	
-	class Subscription
+	class Subscription09
 		attr_accessor :consumer_tag, :message_max, :timeout, :ack, :exclusive
 		attr_reader :client, :queue, :message_count
 	
@@ -72,16 +72,17 @@ If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
 	
 		def setup_consumer
 			client.send_frame(
-				Qrack::Protocol::Basic::Consume.new({ :queue => queue.name,
-																					 		:consumer_tag => consumer_tag,
-																					 		:no_ack => !ack,
-																							:exclusive => exclusive,
-																					 		:nowait => false }.merge(@opts))
+				Qrack::Protocol09::Basic::Consume.new({ :reserved_1 => 0,
+																			 					:queue => queue.name,
+																	 		 					:consumer_tag => consumer_tag,
+																	 		 					:no_ack => !ack,
+																								:exclusive => exclusive,
+																	 		 					:nowait => false}.merge(@opts))
 												)
 
 			method = client.next_method
 		
-			if method.is_a?(Qrack::Protocol::Basic::ConsumeOk)
+			if method.is_a?(Qrack::Protocol09::Basic::ConsumeOk)
 				@consumer_tag = method.consumer_tag
 			else
 				raise Bunny::ProtocolError,	"Error subscribing to queue #{queue.name}"

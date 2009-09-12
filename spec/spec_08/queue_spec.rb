@@ -25,7 +25,13 @@ describe Bunny do
 		q.bind(exch, :nowait => true).should == :bind_ok
 	end
 	
-	it "should be able to bind to an exchange" do
+	it "should raise an error when trying to bind to a non-existent exchange" do
+		q = @b.queue('test1')
+		lambda {q.bind('bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+		@b.channel.active.should == false
+	end
+	
+	it "should be able to bind to an existing exchange" do
 		exch = @b.exchange('direct_exch')
 		q = @b.queue('test1')
 		q.bind(exch).should == :bind_ok
@@ -37,7 +43,13 @@ describe Bunny do
 		q.unbind(exch, :nowait => true).should == :unbind_ok
 	end
 	
-	it "should be able to unbind from an exchange" do
+	it "should raise an error if unbinding from a non-existent exchange" do
+		q = @b.queue('test1')
+		lambda {q.unbind('bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+		@b.channel.active.should == false
+	end
+	
+	it "should be able to unbind from an existing exchange" do
 		exch = @b.exchange('direct_exch')
 		q = @b.queue('test1')
 		q.unbind(exch).should == :unbind_ok
@@ -75,11 +87,17 @@ describe Bunny do
 		msg.should == lg_msg
 	end
 	
-	it "should be able to be purged to remove all of its messages" do
+	it "should raise an error if purge fails" do
 		q = @b.queue('test1')
 		5.times {q.publish('This is another test message')}
 		q.message_count.should == 5
-		q.purge
+		lambda {q.purge(:queue => 'bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+	end
+	
+	it "should be able to be purged to remove all of its messages" do
+		q = @b.queue('test1')
+		q.message_count.should == 5
+		q.purge.should == :purge_ok
 		q.message_count.should == 0
 	end
 	
@@ -106,15 +124,21 @@ describe Bunny do
 		q.message_count.should == 5
 		q.subscribe(:message_max => 5)
 	end
-	
+
 	it "should stop subscription after processing message_max messages < total in queue" do
-		@b.qos()
 		q = @b.queue('test1')
+		@b.qos()
 		10.times {q.publish('Yet another test message')}
 		q.message_count.should == 10
 		q.subscribe(:message_max => 5, :ack => true)
 		q.message_count.should == 5
 		q.purge.should == :purge_ok
+	end
+
+	it "should raise an error when delete fails" do
+		q = @b.queue('test1')
+		lambda {q.delete(:queue => 'bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+		@b.channel.active.should == false
 	end
 
   it "should pass correct block parameters through on subscribe" do
@@ -144,10 +168,13 @@ describe Bunny do
     end
 
     5.times {|i| q.publish("#{i}")}
-    q.subscribe do |msg|
-      q.unsubscribe if msg[:payload] == '4'
-			break
-    end
+		q.subscribe do |msg|
+		  if msg[:payload] == '4'
+				q.unsubscribe 
+				break
+			end
+		end
+
   end
 
 	it "should be able to be deleted" do

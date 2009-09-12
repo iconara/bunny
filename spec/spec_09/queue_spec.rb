@@ -25,16 +25,28 @@ describe Bunny do
 		q.bind(exch, :nowait => true).should == :bind_ok
 	end
 	
-	it "should be able to bind to an exchange" do
+	it "should raise an error when trying to bind to a non-existent exchange" do
+		q = @b.queue('test1')
+		lambda {q.bind('bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+		@b.channel.active.should == false
+	end
+	
+	it "should be able to bind to an existing exchange" do
 		exch = @b.exchange('direct_exch')
 		q = @b.queue('test1')
 		q.bind(exch).should == :bind_ok
 	end
 
-	it "should ignore the :nowait option when unbinding from an exchange" do
+	it "should ignore the :nowait option when unbinding from an existing exchange" do
 		exch = @b.exchange('direct_exch')
 		q = @b.queue('test0')
 		q.unbind(exch, :nowait => true).should == :unbind_ok
+	end
+	
+	it "should raise an error if unbinding from a non-existent exchange" do
+		q = @b.queue('test1')
+		lambda {q.unbind('bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+		@b.channel.active.should == false
 	end
 	
 	it "should be able to unbind from an exchange" do
@@ -75,11 +87,17 @@ describe Bunny do
 		msg.should == lg_msg
 	end
 	
-	it "should be able to be purged to remove all of its messages" do
+	it "should raise an error if purge fails" do
 		q = @b.queue('test1')
 		5.times {q.publish('This is another test message')}
 		q.message_count.should == 5
-		q.purge
+		lambda {q.purge(:queue => 'bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+	end
+	
+	it "should be able to be purged to remove all of its messages" do
+		q = @b.queue('test1')
+		q.message_count.should == 5
+		q.purge.should == :purge_ok
 		q.message_count.should == 0
 	end
 	
@@ -90,14 +108,13 @@ describe Bunny do
 		msg = q.pop
 		msg.should == :queue_empty
 	end
-	
+
 	it "should stop subscription without processing messages if max specified is 0" do
 		q = @b.queue('test1')
 		5.times {q.publish('Yet another test message')}
 		q.message_count.should == 5
-		q.subscribe(:message_max => 0){|msg| x = 1}
+		q.subscribe(:message_max => 0)
 		q.message_count.should == 5
-		q.unsubscribe.should == :unsubscribe_ok
 		q.purge.should == :purge_ok
 	end
 	
@@ -105,8 +122,58 @@ describe Bunny do
 		q = @b.queue('test1')
 		5.times {q.publish('Yet another test message')}
 		q.message_count.should == 5
-		q.subscribe(:message_max => 5){|msg| x = 1}
-		q.unsubscribe.should == :unsubscribe_ok
+		q.subscribe(:message_max => 5)
+	end
+	
+	it "should stop subscription after processing message_max messages < total in queue" do
+		q = @b.queue('test1')
+		@b.qos()
+		10.times {q.publish('Yet another test message')}
+		q.message_count.should == 10
+		q.subscribe(:message_max => 5, :ack => true)
+		q.message_count.should == 5
+		q.purge.should == :purge_ok
+	end
+	
+	it "should raise an error when delete fails" do
+		q = @b.queue('test1')
+		lambda {q.delete(:queue => 'bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
+		@b.channel.active.should == false
+	end
+
+	it "should pass correct block parameters through on subscribe" do
+    q = @b.queue('test1')
+    q.publish("messages pop\'n")
+
+    q.subscribe do |msg|
+      msg[:header].should be_an_instance_of Qrack::Protocol09::Header
+      msg[:payload].should == "messages pop'n"
+      msg[:delivery_details].should_not be_nil
+			msg[:queue].should == q
+
+      q.unsubscribe
+			break
+    end
+
+	end
+
+	it "should finish processing subscription messages if break is called in block" do
+	  q = @b.queue('test1')
+	  q.publish('messages in my quezen')
+
+	  q.subscribe do |msg|
+	    msg[:payload].should == 'messages in my quezen'
+	    q.unsubscribe
+			break
+	  end
+
+	  5.times {|i| q.publish("#{i}")}
+		q.subscribe do |msg|
+		  if msg[:payload] == '4'
+				q.unsubscribe 
+				break
+			end
+		end
 	end
 
 	it "should be able to be deleted" do
@@ -115,18 +182,18 @@ describe Bunny do
 		res.should == :delete_ok
 		@b.queues.has_key?('test1').should be(false)
 	end
-	
+
 	it "should ignore the :nowait option when deleted" do
 		q = @b.queue('test0')
 		q.delete(:nowait => true)
 	end
 
-  it "should support server named queues" do
-    q = @b.queue
-    q.name.should_not == nil
+	it "should support server named queues" do
+	  q = @b.queue
+	  q.name.should_not == nil
 
-    @b.queue(q.name).should == q
-    q.delete
-  end
+	  @b.queue(q.name).should == q
+	  q.delete
+	end
 	
 end
