@@ -63,7 +63,7 @@ describe Bunny do
 	
 	it "should be able to pop a message complete with header and delivery details" do
 		q = @b.queue('test1')
-		msg = q.pop(:header => true)
+		msg = q.pop()
 		msg.should be_an_instance_of(Hash)
 		msg[:header].should be_an_instance_of(Bunny::Protocol09::Header)
 		msg[:payload].should == 'This is a test message'
@@ -74,7 +74,7 @@ describe Bunny do
 	it "should be able to pop a message and just get the payload" do
 		q = @b.queue('test1')
 		q.publish('This is another test message')
-		msg = q.pop
+		msg = q.pop[:payload]
 		msg.should == 'This is another test message'
 		q.message_count.should == 0
 	end
@@ -83,7 +83,7 @@ describe Bunny do
 		q = @b.queue('test1')
 		lg_msg = 'z' * 142000
 		q.publish(lg_msg)
-		msg = q.pop
+		msg = q.pop[:payload]
 		msg.should == lg_msg
 	end
 	

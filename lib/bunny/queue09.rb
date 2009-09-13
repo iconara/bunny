@@ -166,9 +166,7 @@ from queues if successful. If an error occurs raises _Bunny_::_ProtocolError_.
 Gets a message from a queue in a synchronous way. If error occurs, raises _Bunny_::_ProtocolError_.
 
 ==== OPTIONS:
-
-* <tt>:header => true or false (_default_)</tt> - If set to _true_,
-  hash <tt>{:header, :delivery_details, :payload}</tt> is returned. 
+ 
 * <tt>:no_ack => true (_default_) or false</tt> - If set to _true_, the server does not expect an
   acknowledgement message from the client. If set to _false_, the server expects an acknowledgement
   message from the client and will re-queue the message if it does not receive one within a time specified
@@ -176,16 +174,12 @@ Gets a message from a queue in a synchronous way. If error occurs, raises _Bunny
 
 ==== RETURNS:
 
-If <tt>:header => true</tt> returns hash <tt>{:header, :delivery_details, :payload}</tt>. <tt>:delivery_details</tt> is
-a hash <tt>{:delivery_tag, :redelivered, :exchange, :routing_key, :message_count}</tt>. If 
-<tt>:header => false</tt> only the message payload is returned.
+Hash <tt>{:header, :delivery_details, :payload}</tt>. <tt>:delivery_details</tt> is
+a hash <tt>{:delivery_tag, :redelivered, :exchange, :routing_key, :message_count}</tt>.
 
 =end
 
 	  def pop(opts = {})
-			
-			# do we want the message header?
-			hdr = opts.delete(:header)
 			
 			# do we want to have to provide an acknowledgement?
 			ack = opts.delete(:ack)
@@ -219,7 +213,7 @@ a hash <tt>{:delivery_tag, :redelivered, :exchange, :routing_key, :message_count
 			end
 
 			# Return message with additional info if requested
-			hdr ? {:header => header, :payload => msg, :delivery_details => method.arguments} : msg
+			{:header => header, :payload => msg, :delivery_details => method.arguments}
 			
 	  end
 	
