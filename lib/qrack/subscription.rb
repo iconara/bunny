@@ -71,7 +71,7 @@ module Qrack
 				end
 
 				# If block present, pass the message info to the block for processing		
-				blk.call({:header => header, :payload => msg, :delivery_details => method.arguments, :queue => queue}) if !blk.nil?
+				blk.call({:header => header, :payload => msg, :delivery_details => method.arguments}) if !blk.nil?
 
 				# Increment message counter
 				@message_count += 1
