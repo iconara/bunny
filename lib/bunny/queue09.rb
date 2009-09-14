@@ -195,7 +195,7 @@ a hash <tt>{:delivery_tag, :redelivered, :exchange, :routing_key, :message_count
 			method = client.next_method
 			
 			if method.is_a?(Qrack::Protocol09::Basic::GetEmpty) then
-				return :queue_empty
+				return {:header => nil, :payload => :queue_empty, :delivery_details => nil}
 			elsif	!method.is_a?(Qrack::Protocol09::Basic::GetOk)
 				raise Bunny::ProtocolError, "Error getting message from queue #{name}"
 			end
@@ -271,6 +271,9 @@ Returns hash {:message_count, :consumer_count}.
 			# Create subscription
 			s = Bunny::Subscription09.new(client, self, opts)
 			s.start(&blk)
+			
+			# Reset when subscription finished
+			@subscription = nil
 		end
 		
 =begin rdoc

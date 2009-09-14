@@ -13,8 +13,8 @@ processing. If error occurs, _Bunny_::_ProtocolError_ is raised.
 * <tt>:consumer_tag => '_tag_'</tt> - Specifies the identifier for the consumer. The consumer tag is
   local to a connection, so two clients can use the same consumer tags. If this option is not
   specified a server generated name is used.
-* <tt>:no_ack=> true (_default_) or false</tt> - If set to _true_, the server does not expect an
-  acknowledgement message from the client. If set to _false_, the server expects an acknowledgement
+* <tt>:ack => false (_default_) or true</tt> - If set to _false_, the server does not expect an
+  acknowledgement message from the client. If set to _true_, the server expects an acknowledgement
   message from the client and will re-queue the message if it does not receive one within a time specified
   by the server.
 * <tt>:exclusive => true or false (_default_)</tt> - Request exclusive consumer access, meaning
@@ -25,10 +25,37 @@ processing. If error occurs, _Bunny_::_ProtocolError_ is raised.
 * <tt>:message_max => max number messages to process</tt> - When the required number of messages
   is processed subscribe loop is exited.
 
-==== RETURNS:
+==== OPERATION:
 
-<tt>details</tt> is a hash containing <tt>{:consumer_tag, :delivery_tag, :redelivered, :exchange, :routing_key}</tt>.
-If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
+Passes a hash of message information to the block, if one has been supplied. The hash contains 
+:header, :payload and :delivery_details. The structure of the data is as follows -
+
+:header has instance variables - 
+  @klass
+  @size
+  @weight
+  @properties is a hash containing -
+    :content_type
+    :delivery_mode
+    :priority
+
+:payload contains the message contents
+
+:delivery details is a hash containing -
+  :consumer_tag
+  :delivery_tag
+  :redelivered
+  :exchange 
+  :routing_key
+
+If the :timeout option is specified then Qrack::ClientTimeout is raised if method times out
+waiting to receive the next message from the queue.
+
+==== EXAMPLES
+
+my_queue.subscribe(:timeout => 5) {|msg| puts msg[:payload]}
+
+my_queue.subscribe(:message_max => 10, :ack => true) {|msg| puts msg[:payload]}
 
 =end
 	
@@ -45,12 +72,11 @@ If <tt>:timeout => > 0</tt> is reached Qrack::ClientTimeout is raised
 												)
 
 			method = client.next_method
-		
-			if method.is_a?(Qrack::Protocol::Basic::ConsumeOk)
-				@consumer_tag = method.consumer_tag
-			else
-				raise Bunny::ProtocolError,	"Error subscribing to queue #{queue.name}"
-			end
+			
+			client.check_response(method,	Qrack::Protocol::Basic::ConsumeOk,
+				"Error subscribing to queue #{queue.name}")
+
+			@consumer_tag = method.consumer_tag
 		
 		end
 	

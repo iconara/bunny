@@ -105,7 +105,7 @@ describe Bunny do
 		q = @b.queue('test1')
 		q.publish('This is another test message')
 		q.pop
-		msg = q.pop
+		msg = q.pop[:payload]
 		msg.should == :queue_empty
 	end
 
@@ -149,7 +149,6 @@ describe Bunny do
       msg[:header].should be_an_instance_of Qrack::Protocol09::Header
       msg[:payload].should == "messages pop'n"
       msg[:delivery_details].should_not be_nil
-			msg[:queue].should == q
 
       q.unsubscribe
 			break

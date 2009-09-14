@@ -57,6 +57,9 @@ module Qrack
 					queue.unsubscribe(:consumer_tag => consumer_tag)
 					break
 				end
+				
+				# Increment message counter
+				@message_count += 1
 		
 				# get delivery tag to use for acknowledge
 				delivery_tag = method.delivery_tag if @ack
@@ -72,9 +75,6 @@ module Qrack
 
 				# If block present, pass the message info to the block for processing		
 				blk.call({:header => header, :payload => msg, :delivery_details => method.arguments}) if !blk.nil?
-
-				# Increment message counter
-				@message_count += 1
 
 				# Exit loop if message_max condition met
 				if (!message_max.nil? and message_count == message_max)
