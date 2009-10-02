@@ -65,8 +65,12 @@ ask to confirm a single message or a set of messages up to and including a speci
 =end
 	
 		def ack(opts={})
-			# If delivery tag is nil then set it to 1 to prevent errors
-			self.delivery_tag = opts[:delivery_tag] || 1
+			# Set delivery tag
+			if delivery_tag.nil? and opts[:delivery_tag].nil?
+				raise Bunny::AcknowledgementError, "No delivery tag received"
+			else
+				self.delivery_tag = opts[:delivery_tag] if delivery_tag.nil?
+			end
 			
       client.send_frame(
         Qrack::Protocol::Basic::Ack.new({:delivery_tag => delivery_tag, :multiple => false}.merge(opts))
@@ -166,19 +170,28 @@ Gets a message from a queue in a synchronous way. If error occurs, raises _Bunny
 
 ==== OPTIONS:
  
-* <tt>:no_ack => true (_default_) or false</tt> - If set to _true_, the server does not expect an
-  acknowledgement message from the client. If set to _false_, the server expects an acknowledgement
+* <tt>:ack => false (_default_) or true</tt> - If set to _false_, the server does not expect an
+  acknowledgement message from the client. If set to _true_, the server expects an acknowledgement
   message from the client and will re-queue the message if it does not receive one within a time specified
   by the server.
 
 ==== RETURNS:
 
-Hash <tt>{:header, :delivery_details, :payload}</tt>. <tt>:delivery_details</tt> is
-a hash <tt>{:delivery_tag, :redelivered, :exchange, :routing_key, :message_count}</tt>.
+Hash <tt>{:header, :payload, :delivery_details}</tt>. <tt>:delivery_details</tt> is
+a hash <tt>{:consumer_tag, :delivery_tag, :redelivered, :exchange, :routing_key}</tt>.
+
+If the queue is empty the returned hash will contain the values -
+
+  :header => nil
+  :payload => :queue_empty
+  :delivery_details => nil
+
+N.B. If a block is provided then the hash will be passed into the block and the return value
+will be nil.
 
 =end
 
-	  def pop(opts = {})
+	  def pop(opts = {}, &blk)
 			
 			# do we want to have to provide an acknowledgement?
 			ack = opts.delete(:ack)
@@ -193,25 +206,32 @@ a hash <tt>{:delivery_tag, :redelivered, :exchange, :routing_key, :message_count
 			method = client.next_method
 			
 			if method.is_a?(Qrack::Protocol::Basic::GetEmpty) then
-				return {:header => nil, :payload => :queue_empty, :delivery_details => nil}
+				queue_empty = true
 			elsif	!method.is_a?(Qrack::Protocol::Basic::GetOk)
 				raise Bunny::ProtocolError, "Error getting message from queue #{name}"
 			end
 			
-			# get delivery tag to use for acknowledge
-			self.delivery_tag = method.delivery_tag if ack
+			if !queue_empty
+				# get delivery tag to use for acknowledge
+				self.delivery_tag = method.delivery_tag if ack
 			
-	    header = client.next_payload
+		    header = client.next_payload
 	
-	    # If maximum frame size is smaller than message payload body then message
-			# will have a message header and several message bodies
-			msg = ''
-			while msg.length < header.size
-				msg += client.next_payload
+		    # If maximum frame size is smaller than message payload body then message
+				# will have a message header and several message bodies
+				msg = ''
+				while msg.length < header.size
+					msg += client.next_payload
+				end
+				
+				msg_hash = {:header => header, :payload => msg, :delivery_details => method.arguments}
+				
+			else
+				msg_hash = {:header => nil, :payload => :queue_empty, :delivery_details => nil}
 			end
-
-			# Return message with additional info if requested
-			{:header => header, :payload => msg, :delivery_details => method.arguments}
+			
+			# Pass message hash to block or return message hash
+			blk ? blk.call(msg_hash) : msg_hash		
 			
 	  end
 	
@@ -304,10 +324,11 @@ the server will not send any more messages for that consumer.
       # Cancel consumer
       client.send_frame( Qrack::Protocol::Basic::Cancel.new(:consumer_tag => consumer_tag,
 																														:nowait => false))
+																														
+			method = client.next_method
 
-      raise Bunny::UnsubscribeError,
-        "Error unsubscribing from queue #{name}" unless
-        client.next_method.is_a?(Qrack::Protocol::Basic::CancelOk)
+			client.check_response(method,	Qrack::Protocol::Basic::CancelOk,
+				"Error unsubscribing from queue #{name}")
 
 			# Reset subscription
 			@subscription = nil

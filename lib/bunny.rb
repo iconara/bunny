@@ -14,8 +14,9 @@ module Bunny
 	class ProtocolError < StandardError; end
 	class ServerDownError < StandardError; end
 	class UnsubscribeError < StandardError; end
+	class AcknowledgementError < StandardError; end
 	
-	VERSION = '0.5.4'
+	VERSION = '0.5.4.rc2'
 	
 	# Returns the Bunny version number
 
@@ -28,10 +29,9 @@ module Bunny
 	def self.new(opts = {})
 		# Set up Bunny according to AMQP spec version required
 		spec_version = opts[:spec] || '08'
-		setup(spec_version, opts)
-		
+
 		# Return client
-		@client
+		setup(spec_version, opts)
 	end
 	
 	# Runs a code block using a short-lived connection
@@ -41,13 +41,14 @@ module Bunny
 
 		# Set up Bunny according to AMQP spec version required
 		spec_version = opts[:spec] || '08'
-		setup(spec_version, opts)
+		client = setup(spec_version, opts)
 		
-    @client.start
-
-    block.call(@client)
-
-    @client.stop
+    begin
+      client.start
+      block.call(client)
+    ensure
+      client.stop
+    end
 
 		# Return success
 		:run_ok
@@ -65,7 +66,7 @@ module Bunny
 			require 'bunny/channel08'
 			require 'bunny/subscription08'
 			
-			@client = Bunny::Client.new(opts)
+			client = Bunny::Client.new(opts)
 		else
 			# AMQP 0-9-1 specification
 			require 'qrack/qrack09'
@@ -75,10 +76,12 @@ module Bunny
 			require 'bunny/channel09'
 			require 'bunny/subscription09'
 			
-			@client = Bunny::Client09.new(opts)
+			client = Bunny::Client09.new(opts)
 		end			
 		
 		include Qrack
+
+    client
 	end
 
 end

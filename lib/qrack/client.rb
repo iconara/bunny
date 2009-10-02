@@ -1,11 +1,12 @@
 module Qrack
 	
 	class ClientTimeout < Timeout::Error; end
+  class ConnectionTimeout < Timeout::Error; end
 	
 	# Client ancestor class
 	class Client
 		
-		CONNECT_TIMEOUT = 1.0
+		CONNECT_TIMEOUT = 5.0
     RETRY_DELAY     = 10.0
 
     attr_reader   :status, :host, :vhost, :port, :logging, :spec, :heartbeat
@@ -19,10 +20,13 @@ module Qrack
       @vhost  = opts[:vhost] || '/'
 			@logfile = opts[:logfile] || nil
 			@logging = opts[:logging] || false
+			@ssl = opts[:ssl] || false
+      @verify_ssl = opts[:verify_ssl].nil? || opts[:verify_ssl]
       @status = :not_connected
 			@frame_max = opts[:frame_max] || 131072
 			@channel_max = opts[:channel_max] || 0
 			@heartbeat = opts[:heartbeat] || 0
+      @connect_timeout = opts[:connect_timeout] || CONNECT_TIMEOUT
 			@logger = nil
 			create_logger if @logging
 			@message_in = false
@@ -100,25 +104,30 @@ with the <tt>:immediate</tt> or <tt>:mandatory</tt> options.
 
 ==== RETURNS:
 
-<tt>:no_return</tt> if message was not returned before timeout .
+<tt>{:header => nil, :payload => :no_return, :return_details => nil}</tt> if message is
+not returned before timeout.
 <tt>{:header, :return_details, :payload}</tt> if message is returned. <tt>:return_details</tt> is
 a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 
 =end
 
 		def returned_message(opts = {})
-			secs = opts[:timeout] || 0.1
-			
+				
 			begin		
-				frame = next_frame(:timeout => secs)
+				frame = next_frame(:timeout => opts[:timeout] || 0.1)
 			rescue Qrack::ClientTimeout
-				return :no_return
+				return {:header => nil, :payload => :no_return, :return_details => nil}
 			end
 
 			method = frame.payload
 			header = next_payload
-	    msg = next_payload
-	    raise Bunny::MessageError, 'unexpected length' if msg.length < header.size
+	
+			# If maximum frame size is smaller than message payload body then message
+			# will have a message header and several message bodies				
+		  msg = ''
+			while msg.length < header.size
+				msg += next_payload
+			end
 
 			# Return the message and related info
 			{:header => header, :payload => msg, :return_details => method.arguments}
@@ -166,12 +175,21 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 
       begin
         # Attempt to connect.
-        @socket = timeout(CONNECT_TIMEOUT) do
+        @socket = timeout(@connect_timeout, ConnectionTimeout) do
           TCPSocket.new(host, port)
         end
 
         if Socket.constants.include? 'TCP_NODELAY'
           @socket.setsockopt Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1
+        end
+
+        if @ssl
+          require 'openssl' unless defined? OpenSSL::SSL
+          @socket = OpenSSL::SSL::SSLSocket.new(@socket)
+          @socket.sync_close = true
+          @socket.connect
+          @socket.post_connection_check(host) if @verify_ssl
+          @socket
         end
       rescue => e
         @status = :not_connected
