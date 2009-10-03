@@ -5,29 +5,15 @@ module Bunny
 											queue_delete
 											exchange_declare
 											exchange_delete)
-											
-		def self.start
-			begin
-				# Get global options
-				global_opts = get_options()
-				# Get subcommand and options
-				cmd, cmd_opts = get_subcommands()
-				# Process the command
-				process_command(global_opts, cmd, cmd_opts)
-		  rescue Bunny::CliError => e
-		    $stderr.puts e.message
-		  end
-		end
 
 		def self.get_options
 			# Parse the command line options
 			global_opts = Trollop::options do
-				version "bunny_cli v0.1.0"
+				version "bunny_cli v#{Bunny.version}"
 				banner <<-EOF 
-\n#====================================#
-# This is the command line interface #
-#    to the Bunny Ruby AMQP client   #
-#====================================#
+\n#===============================================#
+# Bunny Ruby AMQP client command line interface #
+#===============================================#
 
 Usage: bunny [options] <subcommand>
 
@@ -35,6 +21,7 @@ Options:
 
 EOF
 
+				opt :debug, "Output AMQP communication info", :default => false
 				opt :help, "Show this message"
 			  opt :host, "Host name", :default => 'localhost', :short => 'H'
 			  opt :pass, "User password", :default => 'guest'
@@ -62,10 +49,15 @@ EOF
 			end
 
 		end
+		
+		def self.close_connection
+			@client.close
+		end
 
-		def self.get_subcommands
-			# Parse command line subcommands
-			cmd = ARGV.shift # get the subcommand
+		def self.get_subcommand
+			# Parse command line subcommand
+			cmd = ARGV.shift
+			
 			cmd_opts = case cmd
 				when nil
 					Trollop::die "No subcommand given. What do you want me to do?"
@@ -87,32 +79,60 @@ EOF
 			[cmd, cmd_opts]
 
 		end
+		
+		def self.open_connection(global_opts)
+			# Create client
+			@client = Bunny.new(:host => global_opts[:host],
+												 :port => global_opts[:port],
+												 :vhost => global_opts[:vhost],
+												 :user => global_opts[:user],
+												 :pass => global_opts[:pass],
+												 :connect_timeout => global_opts[:timeout],
+												 :logging => global_opts[:debug])
+			# Connect to server									
+			@client.start
+		end
 
-		def self.process_command(global_opts, cmd, cmd_opts)
+		def self.process_command(cmd, cmd_opts)
+			
 			# Decide what to do
 			case cmd
 				when 'queue_declare'
-					code_string = "q = c.queue(\'#{cmd_opts[:name]}\')"
-					code_string += "; puts \"\n================================\""
-					code_string += "; puts \"Queue: \#{q.name} created successfully\""
-					code_string += "; puts \"================================\n\n\""
+					q = @client.queue("#{cmd_opts[:name]}")
+					puts "\n================================"
+					puts "Queue: #{q.name} created successfully"
+					puts "================================\n\n"
 				when 'queue_delete'
-					code_string = "q = c.queue(\'#{cmd_opts[:name]}\')"
-					code_string += "; q.delete()"
-					code_string += "; puts \"\n================================\""
-					code_string += "; puts \"Queue: \#{q.name} deleted successfully\""
-					code_string += "; puts \"================================\n\n\""
+					q = @client.queue("#{cmd_opts[:name]}")
+					q.delete()
+					puts "\n================================"
+					puts "Queue: #{q.name} deleted successfully"
+					puts "================================\n\n"
 				when 'exchange_declare'
 
 				when 'exchange_delete'
+					
 			end
-
-			Bunny.run(:host => global_opts[:host],
-								:port => global_opts[:port],
-								:vhost => global_opts[:vhost],
-								:user => global_opts[:user],
-								:pass => global_opts[:pass],
-								:connect_timeout => global_opts[:timeout]) { |c| eval(code_string, binding, __FILE__, __LINE__) }
+			
+		end
+		
+		def self.start
+			
+			begin
+				# Get global options
+				global_opts = get_options()
+				# Get subcommand and options
+				cmd, cmd_opts = get_subcommand()
+				# Open server connection
+				open_connection(global_opts)
+				# Process the command
+				process_command(cmd, cmd_opts)
+				# Close server connection
+				close_connection
+		  rescue Bunny::CliError => e
+		    $stderr.puts e.message
+		  end
+		
 		end
 		
 	end
