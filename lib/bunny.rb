@@ -5,6 +5,9 @@ $:.unshift File.expand_path(File.dirname(__FILE__))
 	require file
 end
 
+# Command line interface controller
+require 'bunny/commander'
+
 module Bunny
 
 	class ConnectionError < StandardError; end
@@ -15,6 +18,7 @@ module Bunny
 	class ServerDownError < StandardError; end
 	class UnsubscribeError < StandardError; end
 	class AcknowledgementError < StandardError; end
+	class CliError < StandardError; end
 	
 	VERSION = '0.6.0'
 	
@@ -56,7 +60,8 @@ module Bunny
 
 	private
 	
-	def self.setup(version, opts)	
+	def self.setup(version, opts)
+			
 		if version == '08'
 			# AMQP 0-8 specification
 			require 'qrack/qrack08'
