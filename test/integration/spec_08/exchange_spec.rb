@@ -159,4 +159,14 @@ describe 'Exchange' do
 		exch.delete(:nowait => true)
 	end
 	
+	after(:all) do
+    @b = Bunny.new
+		@b.start
+		@b.exchange('fanout_exchange', :type => :fanout).delete
+		@b.exchange('return_exch').delete
+		@b.exchange('headers_exchange', :type => :headers).delete
+		@b.exchange('direct_defaultex').delete
+		@b.exchange('topic_exchange', :type => :topic).delete	
+	end
+	
 end
