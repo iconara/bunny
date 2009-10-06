@@ -99,7 +99,7 @@ with the <tt>:immediate</tt> or <tt>:mandatory</tt> options.
 
 ==== OPTIONS:
 
-* <tt>:timeout => number of seconds (default = 0.1) - The method will wait for a return
+* <tt>:timeout => number of seconds (default = 1) - The method will wait for a return
   message until this timeout interval is reached.
 
 ==== RETURNS:
@@ -114,7 +114,7 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 		def returned_message(opts = {})
 			
 			begin		
-				frame = next_frame(:timeout => opts[:timeout] || 0.1)
+				frame = next_frame(:timeout => opts[:timeout] || 1)
 			rescue Qrack::ClientTimeout
 				return {:header => nil, :payload => :no_return, :return_details => nil}
 			end
