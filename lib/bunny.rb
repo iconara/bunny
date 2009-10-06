@@ -18,12 +18,6 @@ module Bunny
 	
 	VERSION = '0.6.1'
 	
-	# Returns the Bunny version number
-
-	def self.version
-		VERSION
-	end
-	
 	# Instantiates new Bunny::Client
 
 	def self.new(opts = {})
@@ -53,6 +47,12 @@ module Bunny
 		# Return success
 		:run_ok
   end
+
+	# Returns the Bunny version number
+
+	def self.version
+		VERSION
+	end
 
 	private
 	
