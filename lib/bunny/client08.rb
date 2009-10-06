@@ -363,11 +363,15 @@ the message, potentially then delivering it to an alternative subscriber.
 		
 		def send_heartbeat
 			# Create a new heartbeat frame
-			hb = Qrack::Transport::Heartbeat.new('')		
+			hb = Qrack::Transport::Heartbeat.new('')
+			# Store current client channel
+			stored_chann = @channel.number		
 			# Channel 0 must be used
 			switch_channel(0) if @channel.number > 0			
 			# Send the heartbeat to server
 			send_frame(hb)
+			# Reset current client channel
+			switch_channel(stored_chann) 
 		end
 
 =begin rdoc
