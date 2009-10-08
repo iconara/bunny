@@ -1,24 +1,41 @@
-desc "Run AMQP 0-8 rspec tests"
-task :spec08 do
+desc "Run AMQP 0-8 unit tests"
+task :unit08 do
 	require 'spec/rake/spectask'
-	puts "===== Running 0-8 tests ====="
-	Spec::Rake::SpecTask.new("spec08") do |t|
-		t.spec_files = FileList["spec/spec_08/*_spec.rb"]
+	puts "===== Running 0-8 unit tests ====="
+	Spec::Rake::SpecTask.new("unit08") do |t|
+		t.spec_files = FileList["test/unit/spec_08/*_spec.rb"]
 		t.spec_opts = ['--color']
 	end
 end
 
-desc "Run AMQP 0-9 rspec tests"
-task :spec09 do
+desc "Run AMQP 0-9 unit tests"
+task :unit09 do
 	require 'spec/rake/spectask'
-	puts "===== Running 0-9 tests ====="
-	Spec::Rake::SpecTask.new("spec09") do |t|
-		t.spec_files = FileList["spec/spec_09/*_spec.rb"]
+	puts "===== Running 0-9 unit tests ====="
+	Spec::Rake::SpecTask.new("unit09") do |t|
+		t.spec_files = FileList["test/unit/spec_09/*_spec.rb"]
 		t.spec_opts = ['--color']
 	end
 end
 
-task :default => [ :spec08 ]
+desc "Run AMQP 0-8 rspec integration tests"
+task :int08 do
+	require 'spec/rake/spectask'
+	puts "===== Running 0-8 integration tests ====="
+	Spec::Rake::SpecTask.new("int08") do |t|
+		t.spec_files = FileList["test/integration/spec_08/*_spec.rb"]
+		t.spec_opts = ['--color']
+	end
+end
 
-desc "Run all rspec tests"
-task :all => [:spec08, :spec09]
+desc "Run AMQP 0-9 rspec integration tests"
+task :int09 do
+	require 'spec/rake/spectask'
+	puts "===== Running 0-9 integration tests ====="
+	Spec::Rake::SpecTask.new("int09") do |t|
+		t.spec_files = FileList["test/integration/spec_09/*_spec.rb"]
+		t.spec_opts = ['--color']
+	end
+end
+
+task :default => [ :unit08 ]

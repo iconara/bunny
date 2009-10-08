@@ -54,12 +54,12 @@ Gem::Specification.new do |s|
 		"lib/qrack/transport/buffer09.rb",
 		"lib/qrack/transport/frame08.rb",
 		"lib/qrack/transport/frame09.rb",
-		"spec/spec_08/bunny_spec.rb",
-		"spec/spec_08/exchange_spec.rb",
-		"spec/spec_08/queue_spec.rb",
-		"spec/spec_08/connection_spec.rb",
-		"spec/spec_09/bunny_spec.rb",
-		"spec/spec_09/exchange_spec.rb",
-		"spec/spec_09/queue_spec.rb",
-		"spec/spec_09/connection_spec.rb"]
+		"test/integration/spec_08/bunny_spec.rb",
+		"test/integration/spec_08/exchange_spec.rb",
+		"test/integration/spec_08/queue_spec.rb",
+		"test/integration/spec_08/connection_spec.rb",
+		"test/integration/spec_09/bunny_spec.rb",
+		"test/integration/spec_09/exchange_spec.rb",
+		"test/integration/spec_09/queue_spec.rb",
+		"test/integration/spec_09/connection_spec.rb"]
 end
