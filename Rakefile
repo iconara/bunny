@@ -1,3 +1,13 @@
+desc "Run CLI unit tests"
+task :cli do
+	require 'spec/rake/spectask'
+	puts "===== Running CLI unit tests ====="
+	Spec::Rake::SpecTask.new("cli") do |t|
+		t.spec_files = FileList["test/unit/cli_spec.rb"]
+		t.spec_opts = ['--color']
+	end
+end
+
 desc "Run AMQP 0-8 unit tests"
 task :unit08 do
 	require 'spec/rake/spectask'
@@ -38,4 +48,4 @@ task :int09 do
 	end
 end
 
-task :default => [ :unit08 ]
+task :default => [ :cli, :unit08 ]
