@@ -180,22 +180,29 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
       return @socket if @socket and (@status == :connected) and not @socket.closed?
 
       begin
-        # Attempt to connect.
-        @socket = timeout(@connect_timeout, ConnectionTimeout) do
-          TCPSocket.new(host, port)
-        end
+        if defined?(EM) && defined?(Fiber) && EM.reactor_running?
 
-        if Socket.constants.include? 'TCP_NODELAY'
-          @socket.setsockopt Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1
-        end
+          @socket = EventedBunnyConnection.connect(@host, @port, @connect_timeout)
 
-        if @ssl
-          require 'openssl' unless defined? OpenSSL::SSL
-          @socket = OpenSSL::SSL::SSLSocket.new(@socket)
-          @socket.sync_close = true
-          @socket.connect
-          @socket.post_connection_check(host) if @verify_ssl
-          @socket
+        else
+
+          # Attempt to connect.
+          @socket = timeout(@connect_timeout, ConnectionTimeout) do
+            TCPSocket.new(host, port)
+          end
+
+          if Socket.constants.include? 'TCP_NODELAY'
+            @socket.setsockopt Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1
+          end
+
+          if @ssl
+            require 'openssl' unless defined? OpenSSL::SSL
+            @socket = OpenSSL::SSL::SSLSocket.new(@socket)
+            @socket.sync_close = true
+            @socket.connect
+            @socket.post_connection_check(host) if @verify_ssl
+            @socket
+          end
         end
       rescue => e
         @status = :not_connected
@@ -204,7 +211,132 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 
       @socket
     end
-		
+
+    if defined?(EM)
+    module EventedBunnyConnection
+
+      include EM::Deferrable
+
+		  def self.connect(host, port, timeout, &block)
+        fiber = Fiber.current
+        conn = EM.connect(host, port, self, host, port) do |conn|
+          conn.pending_connect_timeout = timeout
+        end
+        conn.callback do |*args|
+          fiber.resume(args)
+        end
+        conn.errback do |*args|
+          fiber.resume(RuntimeError.new(*args))
+        end
+        result = Fiber.yield
+        if result.is_a?(Exception)
+          raise result
+        end
+        conn
+
+      end
+
+      def initialize(host, port=9090)
+        @host, @port = host, port
+        @index = 0
+        @reconnecting = false
+        @connected = false
+        @buf = ''
+      end
+
+      def trap
+        begin
+          yield
+        rescue Exception => ex
+          puts ex.message
+          puts ex.backtrace.join("\n")
+        end
+      end
+
+      def close
+        trap do
+          @connected = false
+          close_connection(true)
+        end
+      end
+
+      def write(data)
+        send_data(data)
+      end
+
+      def read(size)
+        trap do
+          if can_read?(size)
+            yank(size)
+          else
+            raise ArgumentError, "Unexpected state" if @size or @callback
+
+            fiber = Fiber.current
+            @size = size
+            @callback = proc { |data|
+              fiber.resume(data)
+            }
+            Fiber.yield
+          end
+        end
+      end
+
+      def receive_data(data)
+        trap do
+          (@buf) << data
+
+          if @callback and can_read?(@size)
+            callback = @callback
+            data = yank(@size)
+            @callback = @size = nil
+            callback.call(data)
+          end
+        end
+      end
+
+      def closed?
+        !@connected
+      end
+
+      def connection_completed
+        @reconnecting = false
+        @connected = true
+        succeed
+      end
+
+      def unbind
+        # If we disconnect, try to reconnect
+        if @connected or !@reconnecting
+          EM.add_timer(1) {
+            # XXX Connect timeout?
+            reconnect @host, @port
+          }
+          @connected = false
+          @reconnecting = true
+        end
+      end
+
+      def can_read?(size)
+        @buf.size >= @index + size
+      end
+
+      private
+
+      BUFFER_SIZE = 4096
+
+      def yank(len)
+        data = @buf.slice(@index, len)
+        @index += len
+        @index = @buf.size if @index > @buf.size
+        if @index >= BUFFER_SIZE
+          @buf = @buf.slice(@index..-1)
+          @index = 0
+        end
+        data
+      end
+    end
+    end
+
 	end
 	
 end
