@@ -7,14 +7,16 @@ end
 
 module Bunny
 
-	class ConnectionError < StandardError; end
-	class ForcedChannelCloseError < StandardError; end
-	class ForcedConnectionCloseError < StandardError; end
-	class MessageError < StandardError; end
-	class ProtocolError < StandardError; end
-	class ServerDownError < StandardError; end
-	class UnsubscribeError < StandardError; end
-	class AcknowledgementError < StandardError; end
+	class Error < StandardError; end
+
+	class ConnectionError < Bunny::Error; end
+	class ForcedChannelCloseError < Bunny::Error; end
+	class ForcedConnectionCloseError < Bunny::Error; end
+	class MessageError < Bunny::Error; end
+	class ProtocolError < Bunny::Error; end
+	class ServerDownError < Bunny::Error; end
+	class UnsubscribeError < Bunny::Error; end
+	class AcknowledgementError < Bunny::Error; end
 	
 	VERSION = '0.6.0'
 	
