@@ -158,5 +158,10 @@ describe 'Exchange' do
 		exch = @b.exchange('direct2_exchange')
 		exch.delete(:nowait => true)
 	end
-	
+
+	it "should be able to publish messages with complex headers" do
+		qc = @b.exchange 'bob'
+		qc.publish "ping", :headers=>{"kittens" => "awesome", "header2"=>1272536777}
+		@b.queue 'blab'	
+	end
 end
