@@ -11,7 +11,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), %w[.. .. lib bunny]))
 describe 'Exchange' do
 
 	before(:each) do
-    @b = Bunny.new
+		@b = Bunny.new
 		@b.start
 	end
 
@@ -117,12 +117,12 @@ describe 'Exchange' do
 		exch.publish('This is a published message')
 	end
 
-  it "should not modify the passed options hash when publishing a message" do
+	it "should not modify the passed options hash when publishing a message" do
 		exch = @b.exchange('direct_exchange')
-    opts = {:key => 'a', :persistent => true}
+		opts = {:key => 'a', :persistent => true}
 		exch.publish('', opts)
-    opts.should == {:key => 'a', :persistent => true}
-  end
+		opts.should == {:key => 'a', :persistent => true}
+	end
 	
 	it "should be able to return an undeliverable message" do
 		exch = @b.exchange('return_exch')
