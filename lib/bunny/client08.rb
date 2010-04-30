@@ -78,7 +78,7 @@ Checks response from AMQP methods and takes appropriate action
 						"Error Reply Code: #{received_method.reply_code}\nError Reply Text: #{received_method.reply_text}"
 						
 				when !received_method.is_a?(expected_method)
-					raise err_class, err_msg
+					raise err_class, "#{err_msg}. Expected #{expected_method} but received #{received_method.class}"
 					
 				else
 					:response_ok
