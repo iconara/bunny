@@ -16,4 +16,20 @@ describe Qrack::Transport::Buffer do
 			it.read(type).should == value
 		end
 	end
+
+  it "should throw an exception when reading tables with invalid key markers" do
+    table = Qrack::Transport::Buffer.new
+    
+    table.write :shortstr, "kittens"
+    table.write :octet, 107
+   
+    it = Qrack::Transport::Buffer.new
+    it.write :longstr, table.data 
+    it.rewind
+
+    lambda{
+      it.read :table
+    }.should raise_exception 
+  end
+
 end

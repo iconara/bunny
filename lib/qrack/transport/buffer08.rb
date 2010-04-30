@@ -123,6 +123,8 @@ module Qrack
 	                         table.read(:timestamp)
 	                       when 70 # 'F'
 	                         table.read(:table)
+	                       else
+	                         raise "Unrecognized type marker #{type} (#{type.chr.inspect}) when reading table"
 	                       end
 	          end
 
