@@ -113,6 +113,8 @@ module Qrack
 	                         table.read(:longstr)
 	                       when 73 # 'I'
 	                         table.read(:long)
+	                       when 108 # 'l'
+	                         table.read :longlong
 	                       when 68 # 'D'
 	                         exp = table.read(:octet)
 	                         num = table.read(:long)
@@ -176,6 +178,11 @@ module Qrack
 	                          when Fixnum
 	                            table.write(:octet, 73) # 'I'
 	                            table.write(:long, value)
+	                          when Bignum
+	                            # TODO: Should check for size. This will truncate if we
+	                            # pass it a bignum which requires more than 64-bits.
+	                            table.write(:octet, 108) # 'l'
+	                            table.write(:longlong, value)
 	                          when Float
 	                            table.write(:octet, 68) # 'D'
 	                            # XXX there's gotta be a better way to do this..
