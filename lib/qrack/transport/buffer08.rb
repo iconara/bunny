@@ -198,6 +198,8 @@ module Qrack
 	                          when Hash
 	                            table.write(:octet, 70) # 'F'
 	                            table.write(:table, value)
+                            else
+                              raise "Unknown type #{value.class} in table. How do I write #{value.inspect}?"
 	                          end
 
 	                          table

@@ -17,7 +17,7 @@ describe Qrack::Transport::Buffer do
 		end
 	end
 
-  it "should throw an exception when reading tables with invalid key markers" do
+  it "should raise an exception when reading tables with invalid key markers" do
     table = Qrack::Transport::Buffer.new
     
     table.write :shortstr, "kittens"
@@ -32,4 +32,12 @@ describe Qrack::Transport::Buffer do
     }.should raise_exception 
   end
 
+  it "should raise an exception when invalid types are included in tables" do
+    lambda{
+      Qrack::Transport::Buffer.new.write :table, {:class => String}
+    }.should raise_exception
+  end
+
 end
+
+
