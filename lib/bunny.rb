@@ -5,7 +5,17 @@ $:.unshift File.expand_path(File.dirname(__FILE__))
 	require file
 end
 
+
+require 'qrack'
+require 'bunny/client'
+require 'bunny/exchange'
+require 'bunny/queue'
+require 'bunny/channel'
+require 'bunny/subscription'
+
 module Bunny
+
+include Qrack
 
 	class Error < StandardError; end
 
@@ -56,34 +66,11 @@ module Bunny
 		:run_ok
   end
 
+  include Qrack
 	private
 	
 	def self.setup(version, opts)	
-		if version == '08'
-			# AMQP 0-8 specification
-			require 'qrack/qrack08'
-			require 'bunny/client08'
-			require 'bunny/exchange08'
-			require 'bunny/queue08'
-			require 'bunny/channel08'
-			require 'bunny/subscription08'
-			
-			client = Bunny::Client.new(opts)
-		else
-			# AMQP 0-9-1 specification
-			require 'qrack/qrack09'
-			require 'bunny/client09'
-			require 'bunny/exchange09'
-			require 'bunny/queue09'
-			require 'bunny/channel09'
-			require 'bunny/subscription09'
-			
-			client = Bunny::Client09.new(opts)
-		end			
-		
-		include Qrack
-
-    client
+    Bunny::Client.new(opts)
 	end
 
 end
