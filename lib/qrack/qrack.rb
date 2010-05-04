@@ -1,10 +1,10 @@
 $: << File.expand_path(File.dirname(__FILE__))
 
-require 'protocol/spec09'
-require 'protocol/protocol09'
+require 'protocol/spec08'
+require 'protocol/protocol08'
 
-require 'transport/buffer09'
-require 'transport/frame09'
+require 'transport/buffer08'
+require 'transport/frame08'
 
 require 'qrack/client'
 require 'qrack/channel'
@@ -13,8 +13,8 @@ require 'qrack/subscription'
 
 module Qrack
 	
-	include Protocol09
-	include Transport09
+	include Protocol
+	include Transport
 	
 	# Errors
 	class BufferOverflowError < StandardError; end
