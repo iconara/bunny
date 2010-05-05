@@ -1,5 +1,22 @@
 require 'spec/rake/spectask'
 
+QrackLib = FileList["qrack/lib/**/*.rb"]
+LocalQrack = FileList["lib/qrack/**/*.rb"]
+
+LocalToQrack = {}
+
+LocalQrack.reject!{|f|
+  q = f.gsub(/^lib\/qrack/, "qrack/lib")
+
+  LocalToQrack[f] = q if File.exists? q
+}
+
+LocalToQrack.each{|here, there|
+  file here => there do 
+    sh "cp #{there} #{here}"
+  end
+}
+
 desc "Run AMQP 0-8 rspec tests"
 Spec::Rake::SpecTask.new("spec") do |t|
   t.spec_files = FileList["spec/spec_08/*_spec.rb"]
@@ -18,5 +35,15 @@ namespace "qrack" do
 
   task "update" do
     sh "cd qrack && git pull"
+  end
+  
+
+  task "generate" => LocalQrack do
+    require "qrack/ext/qparser"
+    QParser.new(
+      :spec_in => "qrack/ext/amqp-0.8.json",
+      :frame_out => "lib/qrack/transport/frame.rb",
+      :spec_out => "lib/qrack/protocol/spec.rb"
+    ).generate
   end
 end
