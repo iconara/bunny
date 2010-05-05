@@ -1,17 +1,9 @@
 require 'spec/rake/spectask'
 
 QrackLib = FileList["qrack/lib/**/*.rb"]
-LocalQrack = FileList["lib/qrack/**/*.rb"]
+LocalQrack = QrackLib.map{|there| there.gsub(/^qrack\/lib/, "lib/qrack") }
 
-LocalToQrack = {}
-
-LocalQrack.reject!{|f|
-  q = f.gsub(/^lib\/qrack/, "qrack/lib")
-
-  LocalToQrack[f] = q if File.exists? q
-}
-
-LocalToQrack.each{|here, there|
+QrackLib.zip(LocalQrack).each{|there, here|
   file here => there do 
     sh "cp #{there} #{here}"
   end

@@ -1,10 +1,10 @@
-module Qrack
+module Bunny 
 	
 	class ClientTimeout < Timeout::Error; end
   class ConnectionTimeout < Timeout::Error; end
 	
 	# Client ancestor class
-	class Client
+	class ClientBase < Qrack::Client
 		
 		CONNECT_TIMEOUT = 5.0
     RETRY_DELAY     = 10.0

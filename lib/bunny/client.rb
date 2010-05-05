@@ -1,3 +1,5 @@
+require "bunny/client_base"
+
 module Bunny
 	
 =begin rdoc
@@ -8,7 +10,7 @@ The Client class provides the major Bunny API methods.
 
 =end
 
-  class Client < Qrack::Client
+  class Client < Bunny::ClientBase
 	
 		attr_accessor :ticket
 
