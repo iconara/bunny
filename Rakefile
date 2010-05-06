@@ -1,3 +1,4 @@
+require "rubygems"
 require 'spec/rake/spectask'
 require 'jeweler'
 
@@ -37,7 +38,7 @@ namespace "qrack" do
     end
   end
 
-  task "update" do
+  task "update" => "qrack:clone" do
     sh "cd qrack && git pull"
   end
 
