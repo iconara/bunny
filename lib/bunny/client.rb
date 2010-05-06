@@ -187,7 +187,16 @@ Exchange
     end
 
     def handle_frame_directly(frame)
-      frame.is_a? Qrack::Transport::Heartbeat      
+      return true if frame.is_a? Qrack::Transport::Heartbeat      
+    
+      if (flow = frame.payload).is_a? Qrack::Protocol::Channel::Flow
+        send_frame(
+          Qrack::Protocol::Channel::FlowOk.new(flow.active)
+        )
+        @block_content = !flow.active
+        return true
+      end
+      false
     end
 
 		def open_connection
