@@ -207,8 +207,8 @@ will be nil.
 			
 			if method.is_a?(Qrack::Protocol::Basic::GetEmpty) then
 				queue_empty = true
-			elsif	!method.is_a?(Qrack::Protocol::Basic::GetOk)
-				raise Bunny::ProtocolError, "Error getting message from queue #{name}"
+			else
+				client.check_response(method, Qrack::Protocol::Basic::GetOk, "Error getting message from queue #{name}")
 			end
 			
 			if !queue_empty
