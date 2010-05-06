@@ -53,6 +53,7 @@ Sets up a Bunny::Client object ready for connection to a broker/server. _Client_
 			@spec = '0-8'
 			@port = opts[:port] || (opts[:ssl] ? Qrack::Protocol::SSL_PORT : Qrack::Protocol::PORT)
       @insist = opts[:insist]
+      @block_content = false
     end
 
 =begin rdoc
@@ -197,6 +198,19 @@ Exchange
         return true
       end
       false
+    end
+
+    def block_if_neccessary
+      while @block_content 
+        frame = nil
+        begin
+          frame = next_frame :timeout => 1 
+        rescue Qrack::ClientTimeout
+        end
+        if frame
+          raise "Unexpected frame #{frame} received from server while waiting for Channel-Flow"
+        end
+      end
     end
 
 		def open_connection
@@ -363,6 +377,7 @@ the message, potentially then delivering it to an alternative subscriber.
 		end
 	
 		def send_frame(*args)
+      block_if_neccessary
       args.each do |data|
         data.ticket  = ticket if ticket and data.respond_to?(:ticket=)
         data         = data.to_frame(channel.number) unless data.is_a?(Qrack::Transport::Frame)
