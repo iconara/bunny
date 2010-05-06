@@ -169,9 +169,11 @@ Exchange
 			
 			# Monitor server activity and discard heartbeats
 			@message_in = true
-			
+		
+      
+	
 			case
-				when frame.is_a?(Qrack::Transport::Heartbeat)
+				when handle_frame_directly(frame)
 					next_frame(opts)
 				when frame.nil?
 					frame
@@ -182,6 +184,10 @@ Exchange
 					frame
 			end
 			
+    end
+
+    def handle_frame_directly(frame)
+      frame.is_a? Qrack::Transport::Heartbeat      
     end
 
 		def open_connection
