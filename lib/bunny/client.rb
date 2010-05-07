@@ -200,7 +200,7 @@ Exchange
       false
     end
 
-    def block_if_neccessary
+    def block_if_needed
       while @block_content 
         frame = nil
         begin
@@ -377,7 +377,6 @@ the message, potentially then delivering it to an alternative subscriber.
 		end
 	
 		def send_frame(*args)
-      block_if_neccessary
       args.each do |data|
         data.ticket  = ticket if ticket and data.respond_to?(:ticket=)
         data         = data.to_frame(channel.number) unless data.is_a?(Qrack::Transport::Frame)

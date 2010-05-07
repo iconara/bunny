@@ -141,6 +141,7 @@ nil
 =end
 
     def publish(data, opts = {})
+      client.block_if_needed
       opts = opts.dup
       out = []
 
