@@ -375,7 +375,7 @@ ERB.new(%q[
         ID = 0
 
         @types = {
-	               <%- frame_constants.each do |value, name| -%>
+                 <%- frame_constants.each do |value, name| -%>
                    <%= value %> => '<%= name %>',
                  <%- end -%>
                  }
@@ -421,9 +421,9 @@ ERB.new(%q[
       end
 
       class Method < Frame
-	
+  
         ID = 1
-	
+  
         def initialize payload = nil, channel = 0
           super
           unless @payload.is_a? Protocol::Class::Method or @payload.nil?

@@ -9,12 +9,12 @@ require 'transport/frame'
 require 'client'
 
 module Qrack
-	
-	include Protocol
-	include Transport
-	
-	# Errors
-	class BufferOverflowError < StandardError; end
+  
+  include Protocol
+  include Transport
+  
+  # Errors
+  class BufferOverflowError < StandardError; end
   class InvalidTypeError < StandardError; end
 
   # Qrack version number
