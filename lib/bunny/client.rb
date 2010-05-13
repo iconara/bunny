@@ -197,6 +197,24 @@ Exchange
         @block_content = !flow.active
         return true
       end
+
+      if (deliver = frame.payload).is_a? Qrack::Protocol::Basic::Deliver
+        raise "delivery for #{deliver.consumer_tag} but no subscriber with that tag" if !(subscriber = self.subscribers[deliver.consumer_tag])
+
+        header = next_payload
+
+        # If maximum frame size is smaller than message payload body then message
+        # will have a message header and several message bodies
+        msg = ''
+        while msg.length < header.size
+          msg += next_payload
+        end
+
+        subscriber.deliver({:header => header, :payload => msg, :delivery_details => deliver.arguments})
+        return true;
+      end
+
+
       false
     end
 

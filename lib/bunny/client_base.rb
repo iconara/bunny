@@ -9,7 +9,7 @@ module Bunny
     CONNECT_TIMEOUT = 5.0
     RETRY_DELAY     = 10.0
 
-    attr_reader   :status, :host, :vhost, :port, :logging, :spec, :heartbeat
+    attr_reader   :status, :host, :vhost, :port, :logging, :spec, :heartbeat, :subscribers
     attr_accessor :channel, :logfile, :exchanges, :queues, :channels, :message_in, :message_out,
                    :connecting
 
@@ -37,6 +37,7 @@ module Bunny
       @channel = create_channel()
       @exchanges ||= {}
       @queues ||= {}
+      @subscribers = {}
     end
 
 =begin rdoc

@@ -77,7 +77,12 @@ my_queue.subscribe(:message_max => 10, :ack => true) {|msg| puts msg[:payload]}
         "Error subscribing to queue #{queue.name}")
 
       @consumer_tag = method.consumer_tag
+  
+      if client.subscribers[@consumer_tag] 
+        raise "Received a consumer tag of #{@consumer_tag} but we already have a subscriber with this tag"
+      end      
 
+      client.subscribers[@consumer_tag] = self
     end
 
   end

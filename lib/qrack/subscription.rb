@@ -39,6 +39,15 @@ module Qrack
 
     end
 
+    def deliver(details)
+      if @callback
+        @callback.call(details)
+      else
+        @deliveries ||= []
+        @deliveries << details
+      end
+    end    
+
     def start(&blk)
 
       # Do not process any messages if zero message_max
@@ -47,54 +56,43 @@ module Qrack
       end
 
       # Notify server about new consumer
-      setup_consumer
+      @callback = blk
 
       # Start subscription loop
-      loop do
-
-        begin
+      begin
+        setup_consumer
+        loop do
           method = client.next_method(:timeout => timeout)
-        rescue Qrack::ClientTimeout
-          queue.unsubscribe()
-          break
-        end
 
-        # Increment message counter
-        @message_count += 1
+          raise "unexpected method #{method.inspect}" if method
 
-        # get delivery tag to use for acknowledge
-        queue.delivery_tag = method.delivery_tag if @ack
+          # Increment message counter
+          @message_count += 1
 
-        header = client.next_payload
+          # get delivery tag to use for acknowledge
+          queue.delivery_tag = method.delivery_tag if @ack
+        
+          # Exit loop if message_max condition met
+          if (!message_max.nil? and message_count == message_max)
+            # Stop consuming messages
+            queue.unsubscribe()
+            # Acknowledge receipt of the final message
+            queue.ack() if @ack
+            # Quit the loop
+            break
+          end
 
-        # If maximum frame size is smaller than message payload body then message
-        # will have a message header and several message bodies
-        msg = ''
-        while msg.length < header.size
-          msg += client.next_payload
-        end
-
-        # If block present, pass the message info to the block for processing
-        blk.call({:header => header, :payload => msg, :delivery_details => method.arguments}) if !blk.nil?
-
-        # Exit loop if message_max condition met
-        if (!message_max.nil? and message_count == message_max)
-          # Stop consuming messages
-          queue.unsubscribe()
-          # Acknowledge receipt of the final message
+          # Have to do the ack here because the ack triggers the release of messages from the server
+          # if you are using Client#qos prefetch and you will get extra messages sent through before
+          # the unsubscribe takes effect to stop messages being sent to this consumer unless the ack is
+          # deferred.
           queue.ack() if @ack
-          # Quit the loop
-          break
         end
-
-        # Have to do the ack here because the ack triggers the release of messages from the server
-        # if you are using Client#qos prefetch and you will get extra messages sent through before
-        # the unsubscribe takes effect to stop messages being sent to this consumer unless the ack is
-        # deferred.
-        queue.ack() if @ack
-
+      rescue Qrack::ClientTimeout
+        queue.unsubscribe()
+      ensure
+        @callback = nil
       end
-
     end
 
   end

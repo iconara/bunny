@@ -332,6 +332,7 @@ the server will not send any more messages for that consumer.
 
       # Reset subscription
       @subscription = nil
+      client.subscribers.delete consumer_tag
 
       # Return confirmation
       :unsubscribe_ok
