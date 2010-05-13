@@ -1,3 +1,5 @@
+require "bunny/util/fifo"
+
 module Qrack
   # Subscription ancestor class
   class Subscription
@@ -43,10 +45,24 @@ module Qrack
       if @callback
         @callback.call(details)
       else
-        @deliveries ||= []
-        @deliveries << details
+        @deliveries ||= Fifo.new 
+        @deliveries.push details
       end
     end    
+  
+    def callback(&blk)
+      if @deliveries
+        while !@deliveries.empty?
+          blk.call(@deliveries.pop)
+        end 
+      end
+      @callback = blk
+    end
+
+    def clear_callback
+      @callback = nil
+    end
+
 
     def start(&blk)
 
@@ -56,7 +72,7 @@ module Qrack
       end
 
       # Notify server about new consumer
-      @callback = blk
+      self.callback(&blk)
 
       # Start subscription loop
       begin

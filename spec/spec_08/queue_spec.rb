@@ -116,32 +116,6 @@ describe 'Queue' do
     msg.should == :queue_empty
   end
 
-  it "should stop subscription without processing messages if max specified is 0" do
-    q = @b.queue('test1')
-    5.times {q.publish('Yet another test message')}
-    q.message_count.should == 5
-    q.subscribe(:message_max => 0)
-    q.message_count.should == 5
-    q.purge.should == :purge_ok
-  end
-
-  it "should stop subscription after processing number of messages specified > 0" do
-    q = @b.queue('test1')
-    5.times {q.publish('Yet another test message')}
-    q.message_count.should == 5
-    q.subscribe(:message_max => 5)
-  end
-
-  it "should stop subscription after processing message_max messages < total in queue" do
-    q = @b.queue('test1')
-    @b.qos()
-    10.times {q.publish('Yet another test message')}
-    q.message_count.should == 10
-    q.subscribe(:message_max => 5, :ack => true)
-    q.message_count.should == 5
-    q.purge.should == :purge_ok
-  end
-
   it "should raise an error when delete fails" do
     q = @b.queue('test1')
     lambda {q.delete(:queue => 'bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
