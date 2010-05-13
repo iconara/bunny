@@ -9,46 +9,46 @@
 require File.expand_path(File.join(File.dirname(__FILE__), %w[.. .. lib bunny]))
 
 describe 'Queue' do
-  
+
   before(:each) do
     @b = Bunny.new
     @b.start
   end
-  
+
   it "should ignore the :nowait option when instantiated" do
     q = @b.queue('test0', :nowait => true)
   end
-  
+
   it "should ignore the :nowait option when binding to an exchange" do
     exch = @b.exchange('direct_exch')
     q = @b.queue('test0')
     q.bind(exch, :nowait => true).should == :bind_ok
   end
-  
+
   it "should raise an error when trying to bind to a non-existent exchange" do
     q = @b.queue('test1')
     lambda {q.bind('bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
     @b.channel.active.should == false
   end
-  
+
   it "should be able to bind to an existing exchange" do
     exch = @b.exchange('direct_exch')
     q = @b.queue('test1')
     q.bind(exch).should == :bind_ok
   end
-  
+
   it "should ignore the :nowait option when unbinding from an exchange" do
     exch = @b.exchange('direct_exch')
     q = @b.queue('test0')
     q.unbind(exch, :nowait => true).should == :unbind_ok
   end
-  
+
   it "should raise an error if unbinding from a non-existent exchange" do
     q = @b.queue('test1')
     lambda {q.unbind('bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
     @b.channel.active.should == false
   end
-  
+
   it "should be able to unbind from an existing exchange" do
     exch = @b.exchange('direct_exch')
     q = @b.queue('test1')
@@ -60,7 +60,7 @@ describe 'Queue' do
     q.publish('This is a test message')
     q.message_count.should == 1
   end
-  
+
   it "should be able to pop a message complete with header and delivery details" do
     q = @b.queue('test1')
     msg = q.pop()
@@ -78,7 +78,7 @@ describe 'Queue' do
     msg.should == 'This is another test message'
     q.message_count.should == 0
   end
-  
+
   it "should be able to pop a message where body length exceeds max frame size" do
     q = @b.queue('test1')
     lg_msg = 'z' * 142000
@@ -86,28 +86,28 @@ describe 'Queue' do
     msg = q.pop[:payload]
     msg.should == lg_msg
   end
-  
+
   it "should be able call a block when popping a message" do
     q = @b.queue('test1')
     q.publish('This is another test message')
     q.pop { |msg| msg[:payload].should == 'This is another test message' }
     q.pop { |msg| msg[:payload].should == :queue_empty }
   end
-  
+
   it "should raise an error if purge fails" do
     q = @b.queue('test1')
     5.times {q.publish('This is another test message')}
     q.message_count.should == 5
     lambda {q.purge(:queue => 'bogus')}.should raise_error(Bunny::ForcedChannelCloseError)
   end
-  
+
   it "should be able to be purged to remove all of its messages" do
     q = @b.queue('test1')
     q.message_count.should == 5
     q.purge.should == :purge_ok
     q.message_count.should == 0
   end
-  
+
   it "should return an empty message when popping an empty queue" do
     q = @b.queue('test1')
     q.publish('This is another test message')
@@ -115,7 +115,7 @@ describe 'Queue' do
     msg = q.pop[:payload]
     msg.should == :queue_empty
   end
-  
+
   it "should stop subscription without processing messages if max specified is 0" do
     q = @b.queue('test1')
     5.times {q.publish('Yet another test message')}
@@ -124,7 +124,7 @@ describe 'Queue' do
     q.message_count.should == 5
     q.purge.should == :purge_ok
   end
-  
+
   it "should stop subscription after processing number of messages specified > 0" do
     q = @b.queue('test1')
     5.times {q.publish('Yet another test message')}
@@ -176,7 +176,7 @@ describe 'Queue' do
     5.times {|i| q.publish("#{i}")}
     q.subscribe do |msg|
       if msg[:payload] == '4'
-        q.unsubscribe 
+        q.unsubscribe
         break
       end
     end
@@ -189,7 +189,7 @@ describe 'Queue' do
     res.should == :delete_ok
     @b.queues.has_key?('test1').should be(false)
   end
-  
+
   it "should ignore the :nowait option when deleted" do
     q = @b.queue('test0')
     q.delete(:nowait => true)
@@ -202,5 +202,5 @@ describe 'Queue' do
     @b.queue(q.name).should == q
     q.delete
   end
-  
+
 end

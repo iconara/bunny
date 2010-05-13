@@ -1,11 +1,11 @@
 module Qrack
-  
+
   # Queue ancestor class
   class Queue
-    
+
     attr_reader :name, :client
     attr_accessor :delivery_tag, :subscription
-  
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -47,7 +47,7 @@ nil
     def publish(data, opts = {})
       exchange.publish(data, opts)
     end
-    
+
   end
-  
+
 end

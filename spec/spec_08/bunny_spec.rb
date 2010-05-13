@@ -25,15 +25,15 @@ describe Bunny do
     c.should be_an_instance_of(Bunny::Channel)
     @b.channels.size.should == 3
     c.open.should == :open_ok
-    @b.channel.number.should == 2 
+    @b.channel.number.should == 2
   end
-  
+
   it "should be able to switch between channels" do
     @b.channel.number.should == 1
     @b.switch_channel(0)
     @b.channel.number.should == 0
   end
-  
+
   it "should raise an error if trying to switch to a non-existent channel" do
     lambda { @b.switch_channel(5)}.should raise_error(RuntimeError)
   end
@@ -61,5 +61,5 @@ describe Bunny do
   it "should be able to set QoS" do
     @b.qos.should == :qos_ok
   end
-  
+
 end

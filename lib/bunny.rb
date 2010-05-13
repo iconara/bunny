@@ -27,15 +27,15 @@ include Qrack
   class ServerDownError < Bunny::Error; end
   class UnsubscribeError < Bunny::Error; end
   class AcknowledgementError < Bunny::Error; end
-  
+
   VERSION = '0.6.0'
-  
+
   # Returns the Bunny version number
 
   def self.version
     VERSION
   end
-  
+
   # Instantiates new Bunny::Client
 
   def self.new(opts = {})
@@ -45,7 +45,7 @@ include Qrack
     # Return client
     setup(spec_version, opts)
   end
-  
+
   # Runs a code block using a short-lived connection
 
   def self.run(opts = {}, &block)
@@ -54,7 +54,7 @@ include Qrack
     # Set up Bunny according to AMQP spec version required
     spec_version = opts[:spec] || '08'
     client = setup(spec_version, opts)
-    
+
     begin
       client.start
       block.call(client)
@@ -68,8 +68,8 @@ include Qrack
 
   include Qrack
   private
-  
-  def self.setup(version, opts)  
+
+  def self.setup(version, opts)
     Bunny::Client.new(opts)
   end
 

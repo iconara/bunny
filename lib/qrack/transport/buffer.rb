@@ -18,7 +18,7 @@ module Qrack
       end
 
       attr_reader :pos
-    
+
       def data
         @data.clone
       end
@@ -29,22 +29,22 @@ module Qrack
         @data << data.to_s
         self
       end
-    
+
       def length
         @data.length
       end
-    
+
       def empty?
         pos == length
       end
-    
+
       def rewind
         @pos = 0
       end
-    
+
       def read_properties *types
         types.shift if types.first == :properties
-      
+
         i = 0
         values = []
 
@@ -52,7 +52,7 @@ module Qrack
           (0..14).each do |n|
             # no more property types
             break unless types[i]
-          
+
             # if flag is set
             if props & (1<<(15-n)) != 0
               if types[i] == :bit
@@ -140,10 +140,10 @@ module Qrack
             raise Qrack::InvalidTypeError, "Cannot read data of type #{type}"
           end
         end
-      
+
         types.size == 1 ? values.first : values
       end
-    
+
       def write type, data
         case type
         when :octet
@@ -230,20 +230,20 @@ module Qrack
             end
 
             if value and !last
-              values << [type,value] 
+              values << [type,value]
               short |= 1<<(15-n)
             end
 
             short
           end
-        
+
           values.each do |type, value|
             write(type, value) unless type == :bit
           end
         else
           raise Qrack::InvalidTypeError, "Cannot write data of type #{type}"
         end
-      
+
         self
       end
 
@@ -260,7 +260,7 @@ module Qrack
       def _read(size, pack = nil)
         if @data.is_a?(Qrack::Client)
           raw = @data.read(size)
-          return raw if raw.nil? or pack.nil? 
+          return raw if raw.nil? or pack.nil?
           return raw.unpack(pack).first
         end
 
@@ -276,7 +276,7 @@ module Qrack
           data
         end
       end
-    
+
       def _write data, pack = nil
         data = [*data].pack(pack) if pack
         @data[@pos,0] = data

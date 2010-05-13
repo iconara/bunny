@@ -5,7 +5,7 @@ module Qrack
       def initialize *args
         opts = args.pop if args.last.is_a? Hash
         opts ||= {}
-      
+
         if args.size == 1 and args.first.is_a? Transport::Buffer
           buf = args.shift
         else
@@ -50,11 +50,11 @@ module Qrack
 
         buf
       end
-    
+
       def to_s
         to_binary.to_s
       end
-    
+
       def to_frame channel = 0
         Transport::Method.new(self, channel)
       end
@@ -64,9 +64,9 @@ module Qrack
       def initialize *args
         opts = args.pop if args.last.is_a? Hash
         opts ||= {}
-      
+
         first = args.shift
-      
+
         if first.is_a? ::Class and first.ancestors.include? Protocol::Class
           @klass = first
           @size = args.shift || 0
@@ -76,7 +76,7 @@ module Qrack
         elsif first.is_a? Transport::Buffer or first.is_a? String
           buf = first
           buf = Transport::Buffer.new(buf) unless buf.is_a? Transport::Buffer
-        
+
           @klass = Protocol.classes[buf.read(:short)]
           @weight = buf.read(:short)
           @size = buf.read(:longlong)
@@ -87,10 +87,10 @@ module Qrack
         else
           raise ArgumentError, 'Invalid argument'
         end
-      
+
       end
       attr_accessor :klass, :size, :weight, :properties
-    
+
       def to_binary
         buf = Transport::Buffer.new
         buf.write :short, klass.id
@@ -102,7 +102,7 @@ module Qrack
         buf.rewind
         buf
       end
-    
+
       def to_s
         to_binary.to_s
       end

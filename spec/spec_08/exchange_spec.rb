@@ -19,7 +19,7 @@ describe 'Exchange' do
     lambda { @b.exchange('bogus_ex', :type => :bogus) }.should raise_error(Bunny::ForcedConnectionCloseError)
     @b.status.should == :not_connected
   end
-  
+
   it "should allow a default direct exchange to be instantiated by specifying :type" do
     exch = @b.exchange('amq.direct', :type => :direct)
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -27,7 +27,7 @@ describe 'Exchange' do
     exch.type.should == :direct
     @b.exchanges.has_key?('amq.direct').should be(true)
   end
-  
+
   it "should allow a default direct exchange to be instantiated without specifying :type" do
     exch = @b.exchange('amq.direct')
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -35,7 +35,7 @@ describe 'Exchange' do
     exch.type.should == :direct
     @b.exchanges.has_key?('amq.direct').should be(true)
   end
-  
+
   it "should allow a default fanout exchange to be instantiated without specifying :type" do
     exch = @b.exchange('amq.fanout')
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -43,7 +43,7 @@ describe 'Exchange' do
     exch.type.should == :fanout
     @b.exchanges.has_key?('amq.fanout').should be(true)
   end
-  
+
   it "should allow a default topic exchange to be instantiated without specifying :type" do
     exch = @b.exchange('amq.topic')
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -59,7 +59,7 @@ describe 'Exchange' do
     exch.type.should == :headers
     @b.exchanges.has_key?('amq.match').should be(true)
   end
-  
+
   it "should allow a default headers (amq.headers) exchange to be instantiated without specifying :type" do
     exch = @b.exchange('amq.headers')
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -67,7 +67,7 @@ describe 'Exchange' do
     exch.type.should == :headers
     @b.exchanges.has_key?('amq.headers').should be(true)
   end
-  
+
   it "should create an exchange as direct by default" do
     exch = @b.exchange('direct_defaultex')
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -75,7 +75,7 @@ describe 'Exchange' do
     exch.type.should == :direct
     @b.exchanges.has_key?('direct_defaultex').should be(true)
   end
-  
+
   it "should be able to be instantiated as a direct exchange" do
     exch = @b.exchange('direct_exchange', :type => :direct)
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -83,7 +83,7 @@ describe 'Exchange' do
     exch.type.should == :direct
     @b.exchanges.has_key?('direct_exchange').should be(true)
   end
-  
+
   it "should be able to be instantiated as a topic exchange" do
     exch = @b.exchange('topic_exchange', :type => :topic)
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -91,7 +91,7 @@ describe 'Exchange' do
     exch.type.should == :topic
     @b.exchanges.has_key?('topic_exchange').should be(true)
   end
-  
+
   it "should be able to be instantiated as a fanout exchange" do
     exch = @b.exchange('fanout_exchange', :type => :fanout)
     exch.should be_an_instance_of(Bunny::Exchange)
@@ -107,11 +107,11 @@ describe 'Exchange' do
     exch.type.should == :headers
     @b.exchanges.has_key?('headers_exchange').should be(true)
   end
-  
+
   it "should ignore the :nowait option when instantiated" do
     exch = @b.exchange('direct2_exchange', :nowait => true)
   end
-  
+
   it "should be able to publish a message" do
     exch = @b.exchange('direct_exchange')
     exch.publish('This is a published message')
@@ -123,7 +123,7 @@ describe 'Exchange' do
     exch.publish('', opts)
     opts.should == {:key => 'a', :persistent => true}
   end
-  
+
   it "should be able to return an undeliverable message" do
     exch = @b.exchange('return_exch')
     exch.publish('This message should be undeliverable', :immediate => true)
@@ -131,7 +131,7 @@ describe 'Exchange' do
     ret_msg.should be_an_instance_of(Hash)
     ret_msg[:payload].should == 'This message should be undeliverable'
   end
-  
+
   it "should be able to return a message that exceeds maximum frame size" do
     exch = @b.exchange('return_exch')
     lg_msg = 'z' * 142000
@@ -140,20 +140,20 @@ describe 'Exchange' do
     ret_msg.should be_an_instance_of(Hash)
     ret_msg[:payload].should == lg_msg
   end
-  
+
   it "should report an error if delete fails" do
     exch = @b.exchange('direct_exchange')
     lambda { exch.delete(:exchange => 'bogus_ex') }.should raise_error(Bunny::ForcedChannelCloseError)
     @b.channel.active.should == false
   end
-  
+
   it "should be able to be deleted" do
     exch = @b.exchange('direct_exchange')
     res = exch.delete
     res.should == :delete_ok
     @b.exchanges.has_key?('direct_exchange').should be(false)
   end
-  
+
   it "should ignore the :nowait option when deleted" do
     exch = @b.exchange('direct2_exchange')
     exch.delete(:nowait => true)
@@ -162,6 +162,6 @@ describe 'Exchange' do
   it "should be able to publish messages with complex headers" do
     qc = @b.exchange 'bob'
     qc.publish "ping", :headers=>{"kittens" => "awesome", "header2"=>1272536777}
-    @b.queue 'blab'  
+    @b.queue 'blab'
   end
 end

@@ -1,7 +1,7 @@
 require "bunny/client_base"
 
 module Bunny
-  
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -11,7 +11,7 @@ The Client class provides the major Bunny API methods.
 =end
 
   class Client < Bunny::ClientBase
-  
+
     attr_accessor :ticket
 
 =begin rdoc
@@ -69,20 +69,20 @@ Checks response from AMQP methods and takes appropriate action
         when received_method.is_a?(Qrack::Protocol::Connection::Close)
           # Clean up the socket
           close_socket
-          
+
           raise Bunny::ForcedConnectionCloseError,
             "Error Reply Code: #{received_method.reply_code}\nError Reply Text: #{received_method.reply_text}"
-            
+
         when received_method.is_a?(Qrack::Protocol::Channel::Close)
           # Clean up the channel
           channel.active = false
 
           raise Bunny::ForcedChannelCloseError,
             "Error Reply Code: #{received_method.reply_code}\nError Reply Text: #{received_method.reply_text}"
-            
+
         when !received_method.is_a?(expected_method)
           raise err_class, "#{err_msg}. Expected #{expected_method} but received #{received_method.class}"
-          
+
         else
           :response_ok
       end
@@ -91,15 +91,15 @@ Checks response from AMQP methods and takes appropriate action
     def close_connection
       # Set client channel to zero
       switch_channel(0)
-    
+
       send_frame(
         Qrack::Protocol::Connection::Close.new(:reply_code => 200, :reply_text => 'Goodbye', :class_id => 0, :method_id => 0)
       )
-  
+
       method = next_method
-      
+
       check_response(method, Qrack::Protocol::Connection::CloseOk, "Error closing connection")
-      
+
     end
 
     def create_channel
@@ -139,7 +139,7 @@ Exchange
     def exchange(name, opts = {})
       exchanges[name] || Bunny::Exchange.new(self, name, opts)
     end
-    
+
     def init_connection
       write(Qrack::Protocol::HEADER)
       write([1, 1, Qrack::Protocol::VERSION_MAJOR, Qrack::Protocol::VERSION_MINOR].pack('C4'))
@@ -149,10 +149,10 @@ Exchange
         raise Bunny::ProtocolError, 'Connection initiation failed'
       end
     end
-    
+
     def next_frame(opts = {})
       frame = nil
-      
+
       case
         when channel.frame_buffer.size > 0
           frame = channel.frame_buffer.shift
@@ -163,16 +163,16 @@ Exchange
         else
           frame = Qrack::Transport::Frame.parse(buffer)
       end
-      
+
       @logger.info("received") { frame } if @logging
-            
+
       raise Bunny::ConnectionError, 'No connection to server' if (frame.nil? and !connecting?)
-      
+
       # Monitor server activity and discard heartbeats
       @message_in = true
-    
-      
-  
+
+
+
       case
         when handle_frame_directly(frame)
           next_frame(opts)
@@ -184,12 +184,12 @@ Exchange
         else
           frame
       end
-      
+
     end
 
     def handle_frame_directly(frame)
-      return true if frame.is_a? Qrack::Transport::Heartbeat      
-    
+      return true if frame.is_a? Qrack::Transport::Heartbeat
+
       if (flow = frame.payload).is_a? Qrack::Protocol::Channel::Flow
         send_frame(
           Qrack::Protocol::Channel::FlowOk.new(flow.active)
@@ -201,10 +201,10 @@ Exchange
     end
 
     def block_if_needed
-      while @block_content 
+      while @block_content
         frame = nil
         begin
-          frame = next_frame :timeout => 1 
+          frame = next_frame :timeout => 1
         rescue Qrack::ClientTimeout
         end
         if frame
@@ -225,7 +225,7 @@ Exchange
 
       frame = next_frame
       raise Bunny::ProtocolError, "Connection failed - user: #{@user}" if frame.nil?
-      
+
       method = frame.payload
 
       if method.is_a?(Qrack::Protocol::Connection::Tune)
@@ -243,7 +243,7 @@ Exchange
         :ok
       when Qrack::Protocol::Connection::Redirect
         raise Bunny::ConnectionError, "Cannot connect to the specified server - host: #{@host}, port: #{@port}" if @insist
-        
+
         @host, @port = method.host.split(':')
         close_socket
       else
@@ -290,7 +290,7 @@ true, they are applied to the entire connection.
       )
 
       method = next_method
-      
+
       check_response(method, Qrack::Protocol::Basic::QosOk, "Error specifying Quality of Service")
 
       # return confirmation
@@ -330,7 +330,7 @@ occurs a _Bunny_::_ProtocolError_ is raised.
 Queue
 
 =end
-    
+
     def queue(name = nil, opts = {})
       if name.is_a?(Hash)
         opts = name
@@ -363,19 +363,19 @@ the message, potentially then delivering it to an alternative subscriber.
       )
 
     end
-  
+
     def request_access
       send_frame(
         Qrack::Protocol::Access::Request.new(:realm => '/data', :read => true, :write => true, :active => true, :passive => true)
       )
 
       method = next_method
-      
+
       check_response(method, Qrack::Protocol::Access::RequestOk, "Access denied")
-      
+
       self.ticket = method.ticket
     end
-  
+
     def send_frame(*args)
       args.each do |data|
         data.ticket  = ticket if ticket and data.respond_to?(:ticket=)
@@ -391,12 +391,12 @@ the message, potentially then delivering it to an alternative subscriber.
 
       nil
     end
-    
+
     def send_heartbeat
       # Create a new heartbeat frame
-      hb = Qrack::Transport::Heartbeat.new('')    
+      hb = Qrack::Transport::Heartbeat.new('')
       # Channel 0 must be used
-      switch_channel(0) if @channel.number > 0      
+      switch_channel(0) if @channel.number > 0
       # Send the heartbeat to server
       send_frame(hb)
     end
@@ -413,14 +413,14 @@ _Bunny_::_ProtocolError_ is raised. If successful, _Client_._status_ is set to <
 <tt>:connected</tt> if successful.
 
 =end
-    
+
     def start_session
       @connecting = true
-      
+
       loop do
         # Create/get socket
         socket
-        
+
         # Initiate connection
         init_connection
 
@@ -431,18 +431,18 @@ _Bunny_::_ProtocolError_ is raised. If successful, _Client_._status_ is set to <
       # Open another channel because channel zero is used for specific purposes
       c = create_channel()
       c.open
-      
+
       # Get access ticket
       request_access
 
       @connecting = false
-      
+
       # return status
       @status = :connected
     end
 
     alias start start_session
-    
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -458,15 +458,15 @@ after a commit.
 
     def tx_commit
       send_frame(Qrack::Protocol::Tx::Commit.new())
-      
+
       method = next_method
-      
+
       check_response(method, Qrack::Protocol::Tx::CommitOk, "Error commiting transaction")
 
       # return confirmation
       :commit_ok
     end
-    
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -484,7 +484,7 @@ after a rollback.
       send_frame(Qrack::Protocol::Tx::Rollback.new())
 
       method = next_method
-      
+
       check_response(method, Qrack::Protocol::Tx::RollbackOk, "Error rolling back transaction")
 
       # return confirmation
@@ -508,7 +508,7 @@ using the Commit or Rollback methods.
       send_frame(Qrack::Protocol::Tx::Select.new())
 
       method = next_method
-      
+
       check_response(method, Qrack::Protocol::Tx::SelectOk, "Error initiating transactions for current channel")
 
       # return confirmation

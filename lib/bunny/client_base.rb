@@ -1,11 +1,11 @@
-module Bunny 
-  
+module Bunny
+
   class ClientTimeout < Timeout::Error; end
   class ConnectionTimeout < Timeout::Error; end
-  
+
   # Client ancestor class
   class ClientBase < Qrack::Client
-    
+
     CONNECT_TIMEOUT = 5.0
     RETRY_DELAY     = 10.0
 
@@ -38,7 +38,7 @@ module Bunny
       @exchanges ||= {}
       @queues ||= {}
     end
-    
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -66,20 +66,20 @@ _Bunny_::_ProtocolError_ is raised. If successful, _Client_._status_ is set to <
     end
 
     alias stop close
-    
+
     def connected?
       status == :connected
     end
-    
+
     def connecting?
       connecting
     end
-    
+
     def logging=(bool)
       @logging = bool
       create_logger if @logging
     end
-    
+
     def next_payload(options = {})
       next_frame(options).payload
     end
@@ -93,7 +93,7 @@ _Bunny_::_ProtocolError_ is raised. If successful, _Client_._status_ is set to <
       rescue Errno::EINTR
         retry
       end
-        
+
     end
 
 =begin rdoc
@@ -118,8 +118,8 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 =end
 
     def returned_message(opts = {})
-      
-      begin    
+
+      begin
         frame = next_frame(:timeout => opts[:timeout] || 0.1)
       rescue Qrack::ClientTimeout
         return {:header => nil, :payload => :no_return, :return_details => nil}
@@ -127,9 +127,9 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 
       method = frame.payload
       header = next_payload
-  
+
       # If maximum frame size is smaller than message payload body then message
-      # will have a message header and several message bodies        
+      # will have a message header and several message bodies
       msg = ''
       while msg.length < header.size
         msg += next_payload
@@ -138,7 +138,7 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
       # Return the message and related info
       {:header => header, :payload => msg, :return_details => method.arguments}
     end
-    
+
     def switch_channel(chann)
       if (0...channels.size).include? chann
         @channel = channels[chann]
@@ -147,13 +147,13 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
         raise RuntimeError, "Invalid channel number - #{chann}"
       end
     end
-    
+
     def write(*args)
       send_command(:write, *args)
     end
-    
+
     private
-    
+
     def close_socket(reason=nil)
       # Close the socket. The server is not considered dead.
       @socket.close if @socket and not @socket.closed?
@@ -166,7 +166,7 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
       @logger.level = Logger::INFO
       @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
     end
-    
+
     def send_command(cmd, *args)
       begin
         raise Bunny::ConnectionError, 'No connection - socket has not been created' if !@socket
@@ -204,7 +204,7 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
 
       @socket
     end
-    
+
   end
-  
+
 end
