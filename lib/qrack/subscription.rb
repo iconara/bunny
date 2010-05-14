@@ -84,6 +84,10 @@ module Qrack
       end
     end
 
+    def pop
+      @deliveries.pop
+    end
+
     def poll
       begin 
         run{|d| return d}
