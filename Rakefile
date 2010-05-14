@@ -4,7 +4,6 @@ require 'jeweler'
 
 Jeweler::Tasks.new do |gem|
   gem.name = %q{bunny}
-  gem.version = "0.6.0"
   gem.authors = ["Chris Duncan"]
   gem.date = %q{2009-10-05}
   gem.description = %q{Another synchronous Ruby AMQP client}

@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{bunny}
-  s.version = "0.6.0"
+  s.version = "0.6.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Chris Duncan"]
-  s.date = %q{2010-05-05}
+  s.date = %q{2010-05-14}
   s.description = %q{Another synchronous Ruby AMQP client}
   s.email = %q{celldee@gmail.com}
   s.extra_rdoc_files = [
@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
      "LICENSE",
      "README.rdoc",
      "Rakefile",
+     "VERSION",
      "bunny.gemspec",
      "examples/simple_08.rb",
      "examples/simple_09.rb",
@@ -59,7 +60,6 @@ Gem::Specification.new do |s|
      "spec/spec_08/bunny_spec.rb",
      "spec/spec_08/connection_spec.rb",
      "spec/spec_08/exchange_spec.rb",
-     "spec/spec_08/qrack_spec.rb",
      "spec/spec_08/queue_spec.rb"
   ]
   s.homepage = %q{http://github.com/celldee/bunny/tree/master}
@@ -69,10 +69,10 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{A synchronous Ruby AMQP client that enables interaction with AMQP-compliant brokers/servers.}
   s.test_files = [
-    "spec/spec_08/bunny_spec.rb",
+    "spec/spec_08/fifo_spec.rb",
+     "spec/spec_08/bunny_spec.rb",
      "spec/spec_08/connection_spec.rb",
      "spec/spec_08/queue_spec.rb",
-     "spec/spec_08/qrack_spec.rb",
      "spec/spec_08/exchange_spec.rb",
      "examples/simple_fanout_09.rb",
      "examples/simple_ack_09.rb",
