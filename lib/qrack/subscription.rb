@@ -39,13 +39,23 @@ module Qrack
       # Store options
       @opts = opts
 
+      @deliveries = Fifo.new 
     end
 
     def deliver(details)
-      if @callback
-        @callback.call(details)
+      if @callback  
+        next_delivery = details
+        while next_delivery
+          callback = @callback
+          begin
+            @callback = nil 
+            callback.call(next_delivery)
+            next_delivery = @deliveries.pop
+          ensure
+            @callback = callback
+          end
+        end
       else
-        @deliveries ||= Fifo.new 
         @deliveries.push details
       end
     end    
@@ -63,54 +73,30 @@ module Qrack
       @callback = nil
     end
 
-
-    def start(&blk)
-
-      # Do not process any messages if zero message_max
-      if message_max == 0
-        return
-      end
-
-      # Notify server about new consumer
-      self.callback(&blk)
-
-      # Start subscription loop
+    def run(&blk)
       begin
-        setup_consumer
+        callback(&blk) if blk
         loop do
-          method = client.next_method(:timeout => timeout)
-
-          raise "unexpected method #{method.inspect}" if method
-
-          # Increment message counter
-          @message_count += 1
-
-          # get delivery tag to use for acknowledge
-          queue.delivery_tag = method.delivery_tag if @ack
-        
-          # Exit loop if message_max condition met
-          if (!message_max.nil? and message_count == message_max)
-            # Stop consuming messages
-            queue.unsubscribe()
-            # Acknowledge receipt of the final message
-            queue.ack() if @ack
-            # Quit the loop
-            break
-          end
-
-          # Have to do the ack here because the ack triggers the release of messages from the server
-          # if you are using Client#qos prefetch and you will get extra messages sent through before
-          # the unsubscribe takes effect to stop messages being sent to this consumer unless the ack is
-          # deferred.
-          queue.ack() if @ack
+          raise "unexpected method #{method.inspect}" if client.next_method(:timeout => timeout)
         end
-      rescue Qrack::ClientTimeout
-        queue.unsubscribe()
       ensure
-        @callback = nil
+        clear_callback if blk
       end
     end
 
-  end
+    def poll
+      begin 
+        run{|d| return d}
+      ensure
+        clear_callback
+      end
+      nil
+    end
 
+    def start(&blk)
+      setup_consumer
+      run(&blk) if blk
+      self
+    end
+  end
 end
