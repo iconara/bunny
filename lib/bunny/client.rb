@@ -176,6 +176,12 @@ Exchange
       case
         when handle_frame_directly(frame)
           next_frame(opts)
+        when handle_subscription(frame)
+          if opts[:break_on_subscription] 
+            nil
+          else 
+            next_frame(opts)
+          end
         when frame.nil?
           frame
         when ((frame.channel != channel.number) and (frame.channel != 0))
@@ -197,7 +203,10 @@ Exchange
         @block_content = !flow.active
         return true
       end
+      false
+    end
 
+    def handle_subscription(frame)
       if (deliver = frame.payload).is_a? Qrack::Protocol::Basic::Deliver
         raise "delivery for #{deliver.consumer_tag} but no subscriber with that tag" if !(subscriber = self.subscribers[deliver.consumer_tag])
 
@@ -213,7 +222,6 @@ Exchange
         subscriber.deliver({:header => header, :payload => msg, :delivery_details => deliver.arguments})
         return true;
       end
-
 
       false
     end

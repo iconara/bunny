@@ -73,11 +73,31 @@ module Qrack
       @callback = nil
     end
 
-    def run(&blk)
+    def suppress_callback
+      callback = @callback
+      @callback = nil
+      begin 
+        yield
+      ensure
+        @callback = callback
+      end
+    end
+
+    def await_delivery
+      suppress_callback do
+        while @deliveries.empty?
+          client.next_frame(:break_on_subscription => true)
+        end
+      end
+    end
+
+    def run(opts={}, &blk)
+      opts = opts.dup
+      opts[:timeout] ||= timeout
       begin
         callback(&blk) if blk
         loop do
-          raise "unexpected method #{method.inspect}" if client.next_method(:timeout => timeout)
+          raise "unexpected method #{method.inspect}" if client.next_method(opts)
         end
       ensure
         clear_callback if blk
@@ -89,12 +109,8 @@ module Qrack
     end
 
     def poll
-      begin 
-        run{|d| return d}
-      ensure
-        clear_callback
-      end
-      nil
+      await_delivery
+      pop
     end
 
     def start(&blk)

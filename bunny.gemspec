@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{bunny}
-  s.version = "0.6.1"
+  s.version = "0.6.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Chris Duncan"]
@@ -47,6 +47,7 @@ Gem::Specification.new do |s|
      "lib/bunny/exchange.rb",
      "lib/bunny/queue.rb",
      "lib/bunny/subscription.rb",
+     "lib/bunny/util/fifo.rb",
      "lib/qrack.rb",
      "lib/qrack/channel.rb",
      "lib/qrack/client.rb",
