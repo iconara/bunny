@@ -9,7 +9,7 @@ module Bunny
     CONNECT_TIMEOUT = 5.0
     RETRY_DELAY     = 10.0
 
-    attr_reader   :status, :host, :vhost, :port, :logging, :spec, :heartbeat, :subscribers
+    attr_reader   :status, :host, :vhost, :port, :logging, :spec, :heartbeat, :subscribers, :should_run
     attr_accessor :channel, :logfile, :exchanges, :queues, :channels, :message_in, :message_out,
                    :connecting
 
@@ -153,6 +153,21 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
       send_command(:write, *args)
     end
 
+    def halt
+      @should_run = false
+    end
+
+
+    def run(opts={})
+      @should_run = true
+      subscribers.values.each{|s| s.clear_backlog; break unless @should_run}
+      opts = opts.dup
+      opts[:break_on_subscription] = true if opts[:break_on_subscription].nil? 
+      while @should_run do
+        raise "unexpected method #{method.inspect}" if self.next_frame(opts)
+      end
+    end
+
     private
 
     def close_socket(reason=nil)
@@ -207,5 +222,6 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
     end
 
   end
+
 
 end

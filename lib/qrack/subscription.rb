@@ -61,16 +61,19 @@ module Qrack
     end    
   
     def callback(&blk)
-      if @deliveries
-        while !@deliveries.empty?
-          blk.call(@deliveries.pop)
-        end 
-      end
       @callback = blk
     end
 
     def clear_callback
       @callback = nil
+    end
+
+    def clear_backlog
+      if @callback 
+        while !@deliveries.empty? and client.should_run
+          @callback.call(@deliveries.pop)
+        end 
+      end
     end
 
     def suppress_callback
@@ -96,9 +99,7 @@ module Qrack
       opts[:timeout] ||= timeout
       begin
         callback(&blk) if blk
-        loop do
-          raise "unexpected method #{method.inspect}" if client.next_method(opts)
-        end
+        client.run(opts)
       ensure
         clear_callback if blk
       end

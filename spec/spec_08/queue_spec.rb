@@ -15,6 +15,10 @@ describe 'Queue' do
     @b.start
   end
 
+  after(:each) do
+    @b.stop
+  end
+
   it "should ignore the :nowait option when instantiated" do
     q = @b.queue('test0', :nowait => true)
   end
@@ -155,6 +159,43 @@ describe 'Queue' do
       end
     end
 
+  end
+
+  it "should be able to subscribe to multiple queues at once" do
+    q1 = @b.queue("test1")
+    q2 = @b.queue("test2")
+
+    a = "a"
+    b = "b"
+
+    2.times{ q1.publish(a) }
+    q2.publish(b)
+
+    s1 = q1.subscribe
+    s2 = q2.subscribe
+
+    s1.poll[:payload].should == a
+    s2.poll[:payload].should == b 
+    s1.poll[:payload].should == a
+  end
+
+  it "should be able to halt a running subscription" do
+    q = @b.queue("test1")
+
+    s = q.subscribe
+    10.times{
+      q.publish "hi" 
+    }
+
+    running = true
+    s.callback{|t|
+      running.should be(true)
+      running = false
+      @b.halt
+    }
+
+    @b.run
+    s.clear_callback
   end
 
   it "should be able to be deleted" do
