@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Chris Duncan"]
-  s.date = %q{2010-05-20}
+  s.date = %q{2010-05-25}
   s.description = %q{Another synchronous Ruby AMQP client}
   s.email = %q{celldee@gmail.com}
   s.extra_rdoc_files = [
@@ -61,6 +61,7 @@ Gem::Specification.new do |s|
      "spec/spec_08/bunny_spec.rb",
      "spec/spec_08/connection_spec.rb",
      "spec/spec_08/exchange_spec.rb",
+     "spec/spec_08/fifo_spec.rb",
      "spec/spec_08/queue_spec.rb"
   ]
   s.homepage = %q{http://github.com/celldee/bunny/tree/master}

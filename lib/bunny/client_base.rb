@@ -164,7 +164,8 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
       opts = opts.dup
       opts[:break_on_subscription] = true if opts[:break_on_subscription].nil? 
       while @should_run do
-        raise "unexpected method #{method.inspect}" if self.next_frame(opts)
+        frame = self.next_frame(opts)
+        raise "unexpected frame #{frame.inspect}" if frame
       end
     end
 
