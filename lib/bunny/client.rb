@@ -175,6 +175,8 @@ Exchange
 
 
       case
+        when frame.nil?
+          frame
         when handle_frame_directly(frame)
           next_frame(opts)
         when handle_subscription(frame)
@@ -183,8 +185,6 @@ Exchange
           else 
             next_frame(opts)
           end
-        when frame.nil?
-          frame
         when ((frame.channel != channel.number) and (frame.channel != 0))
           channel.frame_buffer << frame
           next_frame(opts)
