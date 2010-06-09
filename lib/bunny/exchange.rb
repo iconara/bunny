@@ -1,5 +1,5 @@
 module Bunny
-  
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -28,7 +28,7 @@ target broker/server or visit the {AMQP website}[http://www.amqp.org] to find th
 specification that applies to your target broker/server.
 
 =end
-  
+
   class Exchange
 
     attr_reader :client, :type, :name, :opts, :key
@@ -36,9 +36,9 @@ specification that applies to your target broker/server.
     def initialize(client, name, opts = {})
       # check connection to server
       raise Bunny::ConnectionError, 'Not connected to server' if client.status == :not_connected
-    
+
       @client, @name, @opts = client, name, opts
-  
+
       # set up the exchange type catering for default names
       if name.match(/^amq\./)
         new_type = name.sub(/amq\./, '')
@@ -48,14 +48,14 @@ specification that applies to your target broker/server.
       else
         @type = opts[:type] || :direct
       end
-      
+
       @key = opts[:key]
       @client.exchanges[@name] ||= self
-      
+
       # ignore the :nowait option if passed, otherwise program will hang waiting for a
       # response that will not be sent by the server
       opts.delete(:nowait)
-      
+
       unless name == "amq.#{type}" or name == ''
         client.send_frame(
           Qrack::Protocol::Exchange::Declare.new(
@@ -63,10 +63,10 @@ specification that applies to your target broker/server.
           )
         )
 
-				method = client.next_method
+        method = client.next_method
 
-				client.check_response(method, Qrack::Protocol::Exchange::DeclareOk,
-				 	"Error declaring exchange #{name}: type = #{type}")
+        client.check_response(method, Qrack::Protocol::Exchange::DeclareOk,
+           "Error declaring exchange #{name}: type = #{type}")
 
       end
     end
@@ -99,10 +99,10 @@ if successful. If an error occurs raises _Bunny_::_ProtocolError_.
         Qrack::Protocol::Exchange::Delete.new({ :exchange => name, :nowait => false }.merge(opts))
       )
 
-			method = client.next_method
+      method = client.next_method
 
-			client.check_response(method, Qrack::Protocol::Exchange::DeleteOk,
-			 	"Error deleting exchange #{name}")
+      client.check_response(method, Qrack::Protocol::Exchange::DeleteOk,
+         "Error deleting exchange #{name}")
 
       client.exchanges.delete(name)
 
@@ -130,8 +130,8 @@ if any, is committed.
   undeliverable message with a Return method. If set to _false_, the server will queue the message,
   but with no guarantee that it will ever be consumed.
 * <tt>:persistent => true or false (_default_)</tt> - Tells the server whether to persist the message
-  If set to _true_, the message will be persisted to disk and not lost if the server restarts. 
-  If set to _false_, the message will not be persisted across server restart. Setting to _true_ 
+  If set to _true_, the message will be persisted to disk and not lost if the server restarts.
+  If set to _false_, the message will not be persisted across server restart. Setting to _true_
   incurs a performance penalty as there is an extra cost associated with disk access.
 
 ==== RETURNS:
@@ -141,20 +141,21 @@ nil
 =end
 
     def publish(data, opts = {})
+      client.block_if_needed
       opts = opts.dup
       out = []
 
-			# Set up options
-			routing_key = opts.delete(:key) || key
-			mandatory = opts.delete(:mandatory)
-			immediate = opts.delete(:immediate)
-			delivery_mode = opts.delete(:persistent) ? 2 : 1
+      # Set up options
+      routing_key = opts.delete(:key) || key
+      mandatory = opts.delete(:mandatory)
+      immediate = opts.delete(:immediate)
+      delivery_mode = opts.delete(:persistent) ? 2 : 1
 
       out << Qrack::Protocol::Basic::Publish.new(
         { :exchange => name,
-					:routing_key => routing_key,
-					:mandatory => mandatory,
-					:immediate => immediate }
+          :routing_key => routing_key,
+          :mandatory => mandatory,
+          :immediate => immediate }
       )
       data = data.to_s
       out << Qrack::Protocol::Header.new(
@@ -162,7 +163,7 @@ nil
         data.length, {
           :content_type  => 'application/octet-stream',
           :delivery_mode => delivery_mode,
-          :priority      => 0 
+          :priority      => 0
         }.merge(opts)
       )
       out << Qrack::Transport::Body.new(data)
@@ -171,5 +172,5 @@ nil
     end
 
   end
-  
+
 end

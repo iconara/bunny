@@ -1,3 +1,7 @@
+This is a fork of bunny. It currently has a few bug fixes, a build system more to my liking and removed 0.9.1 support, so it's not totally API compatible with the mainline. If you find any incompatibilities other than that, yell at me and I'll try to fix it. 
+
+The bug fixes are largely to qrack, so hopefully they'll make it upstream, but 0.9.1 support isn't on my priority list so I bailed on making the main changes API compatible.
+
 = Bunny: A synchronous Ruby AMQP client
 
 *GitHub* *repo*: http://github.com/celldee/bunny
