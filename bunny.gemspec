@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Chris Duncan"]
-  s.date = %q{2010-05-25}
+  s.date = %q{2010-06-09}
   s.description = %q{Another synchronous Ruby AMQP client}
   s.email = %q{celldee@gmail.com}
   s.extra_rdoc_files = [
@@ -44,6 +44,7 @@ Gem::Specification.new do |s|
      "lib/bunny/channel.rb",
      "lib/bunny/client.rb",
      "lib/bunny/client_base.rb",
+     "lib/bunny/event_machine.rb",
      "lib/bunny/exchange.rb",
      "lib/bunny/queue.rb",
      "lib/bunny/subscription.rb",
@@ -68,35 +69,35 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--main", "README.rdoc"]
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{bunny-amqp}
-  s.rubygems_version = %q{1.3.6}
+  s.rubygems_version = %q{1.3.7}
   s.summary = %q{A synchronous Ruby AMQP client that enables interaction with AMQP-compliant brokers/servers.}
   s.test_files = [
-    "spec/spec_08/fifo_spec.rb",
-     "spec/spec_08/bunny_spec.rb",
+    "spec/spec_08/bunny_spec.rb",
      "spec/spec_08/connection_spec.rb",
-     "spec/spec_08/queue_spec.rb",
      "spec/spec_08/exchange_spec.rb",
-     "examples/simple_fanout_09.rb",
-     "examples/simple_ack_09.rb",
-     "examples/simple_publisher_09.rb",
+     "spec/spec_08/fifo_spec.rb",
+     "spec/spec_08/queue_spec.rb",
      "examples/simple_08.rb",
-     "examples/simple_topic_08.rb",
+     "examples/simple_09.rb",
+     "examples/simple_ack_08.rb",
+     "examples/simple_ack_09.rb",
+     "examples/simple_consumer_08.rb",
+     "examples/simple_consumer_09.rb",
      "examples/simple_fanout_08.rb",
+     "examples/simple_fanout_09.rb",
      "examples/simple_headers_08.rb",
-     "examples/simple_topic_09.rb",
      "examples/simple_headers_09.rb",
      "examples/simple_publisher_08.rb",
-     "examples/simple_ack_08.rb",
-     "examples/simple_consumer_09.rb",
-     "examples/simple_consumer_08.rb",
-     "examples/simple_09.rb"
+     "examples/simple_publisher_09.rb",
+     "examples/simple_topic_08.rb",
+     "examples/simple_topic_09.rb"
   ]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
-    if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
+    if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
     else
     end
   else
