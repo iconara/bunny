@@ -121,7 +121,7 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
     def returned_message(opts = {})
 
       begin
-        frame = next_frame(:timeout => opts[:timeout] || 0.1)
+        frame = next_frame(:timeout => opts[:timeout] || 0.5)
       rescue Qrack::ClientTimeout
         return {:header => nil, :payload => :no_return, :return_details => nil}
       end
