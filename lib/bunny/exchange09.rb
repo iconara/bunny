@@ -60,15 +60,15 @@ specification that applies to your target broker/server.
         client.send_frame(
           Qrack::Protocol09::Exchange::Declare.new(
             { :exchange => name, :type => type, :nowait => false,
-	 						:deprecated_ticket => 0, :deprecated_auto_delete => false, :deprecated_internal => false }.merge(opts)
+               :deprecated_ticket => 0, :deprecated_auto_delete => false, :deprecated_internal => false }.merge(opts)
           )
         )
 
         method = client.next_method
 
-				client.check_response(method, Qrack::Protocol09::Exchange::DeclareOk,
-				 	"Error declaring exchange #{name}: type = #{type}")
-				
+        client.check_response(method, Qrack::Protocol09::Exchange::DeclareOk,
+           "Error declaring exchange #{name}: type = #{type}")
+        
       end
     end
 
@@ -102,8 +102,8 @@ if successful. If an error occurs raises _Bunny_::_ProtocolError_.
 
       method = client.next_method
 
-			client.check_response(method, Qrack::Protocol09::Exchange::DeleteOk,
-			 	"Error deleting exchange #{name}")
+      client.check_response(method, Qrack::Protocol09::Exchange::DeleteOk,
+         "Error deleting exchange #{name}")
 
       client.exchanges.delete(name)
 
@@ -145,29 +145,29 @@ nil
       opts = opts.dup
       out = []
 
-			# Set up options
-			routing_key = opts.delete(:key) || key
-			mandatory = opts.delete(:mandatory)
-			immediate = opts.delete(:immediate)
-			delivery_mode = opts.delete(:persistent) ? 2 : 1
+      # Set up options
+      routing_key = opts.delete(:key) || key
+      mandatory = opts.delete(:mandatory)
+      immediate = opts.delete(:immediate)
+      delivery_mode = opts.delete(:persistent) ? 2 : 1
 
-			out << Qrack::Protocol09::Basic::Publish.new(
-			  { :exchange => name,
-					:routing_key => routing_key,
-					:mandatory => mandatory,
-					:immediate => immediate,
-					:deprecated_ticket => 0 }
-			)
-			data = data.to_s
-			out << Qrack::Protocol09::Header.new(
-			  Qrack::Protocol09::Basic,
-			  data.length, {
-			    :content_type  => 'application/octet-stream',
-			    :delivery_mode => delivery_mode,
-			    :priority      => 0 
-			  }.merge(opts)
-			)
-			out << Qrack::Transport09::Body.new(data)
+      out << Qrack::Protocol09::Basic::Publish.new(
+        { :exchange => name,
+          :routing_key => routing_key,
+          :mandatory => mandatory,
+          :immediate => immediate,
+          :deprecated_ticket => 0 }
+      )
+      data = data.to_s
+      out << Qrack::Protocol09::Header.new(
+        Qrack::Protocol09::Basic,
+        data.length, {
+          :content_type  => 'application/octet-stream',
+          :delivery_mode => delivery_mode,
+          :priority      => 0 
+        }.merge(opts)
+      )
+      out << Qrack::Transport09::Body.new(data)
 
       client.send_frame(*out)
     end

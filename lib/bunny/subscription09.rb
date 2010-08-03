@@ -1,5 +1,5 @@
 module Bunny
-	
+  
 =begin rdoc
 
 === DESCRIPTION:
@@ -58,28 +58,28 @@ my_queue.subscribe(:timeout => 5) {|msg| puts msg[:payload]}
 my_queue.subscribe(:message_max => 10, :ack => true) {|msg| puts msg[:payload]}
 
 =end
-	
-	class Subscription09 < Qrack::Subscription
-	
-		def setup_consumer
-			client.send_frame(
-				Qrack::Protocol09::Basic::Consume.new({ :deprecated_ticket => 0,
-																			 					:queue => queue.name,
-																	 		 					:consumer_tag => consumer_tag,
-																	 		 					:no_ack => !ack,
-																								:exclusive => exclusive,
-																	 		 					:nowait => false}.merge(@opts))
-												)
+  
+  class Subscription09 < Qrack::Subscription
+  
+    def setup_consumer
+      client.send_frame(
+        Qrack::Protocol09::Basic::Consume.new({ :deprecated_ticket => 0,
+                                                 :queue => queue.name,
+                                                  :consumer_tag => consumer_tag,
+                                                  :no_ack => !ack,
+                                                :exclusive => exclusive,
+                                                  :nowait => false}.merge(@opts))
+                        )
 
-			method = client.next_method
+      method = client.next_method
 
-			client.check_response(method,	Qrack::Protocol09::Basic::ConsumeOk,
-				"Error subscribing to queue #{queue.name}")
+      client.check_response(method,  Qrack::Protocol09::Basic::ConsumeOk,
+        "Error subscribing to queue #{queue.name}")
 
-			@consumer_tag = method.consumer_tag
-		
-		end
-	
-	end
-	
+      @consumer_tag = method.consumer_tag
+    
+    end
+  
+  end
+  
 end

@@ -59,9 +59,9 @@ module Qrack
     end
 
     class Method < Frame
-	
+  
       ID = 1
-	
+  
       def initialize payload = nil, channel = 0
         super
         unless @payload.is_a? Protocol09::Class::Method or @payload.nil?
