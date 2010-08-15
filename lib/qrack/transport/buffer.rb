@@ -1,3 +1,4 @@
+# encoding: binary
 if [].map.respond_to? :with_index
   class Array #:nodoc:
     def enum_with_index

@@ -1,3 +1,4 @@
+# encoding: binary
 require "bunny/client_base"
 require 'bunny/event_machine'
 
@@ -217,7 +218,7 @@ Exchange
         # will have a message header and several message bodies
         msg = ''
         while msg.length < header.size
-          msg += next_payload
+          msg << next_payload
         end
 
         subscriber.deliver({:header => header, :payload => msg, :delivery_details => deliver.arguments})
