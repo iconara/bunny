@@ -97,6 +97,23 @@ _Bunny_::_ProtocolError_ is raised. If successful, _Client_._status_ is set to <
 
     end
 
+    def cancellable_read(cancellator, *args)
+      begin
+        raise Bunny::ConnectionError, 'No connection - socket has not been created' if !@socket
+        ios = select([@socket, cancellator].compact)
+        if ios[0].include?(@socket)
+          @socket.__send__(:read, *args)
+        else
+          raise Qrack::Cancelled
+        end
+      rescue Errno::EPIPE, IOError => e
+        raise Bunny::ServerDownError, e.message
+      # Got a SIGINT while waiting; give any traps a chance to run
+      rescue Errno::EINTR
+        retry
+      end
+    end
+
 =begin rdoc
 
 === DESCRIPTION:
@@ -164,8 +181,12 @@ a hash <tt>{:reply_code, :reply_text, :exchange, :routing_key}</tt>.
       opts = opts.dup
       opts[:break_on_subscription] = true if opts[:break_on_subscription].nil? 
       while @should_run do
-        frame = self.next_frame(opts)
-        raise "unexpected frame #{frame.inspect}" if frame
+        begin
+          frame = self.next_frame(opts)
+          raise "unexpected frame #{frame.inspect}" if frame
+        rescue Qrack::Cancelled
+          @should_run = false
+        end
       end
     end
 

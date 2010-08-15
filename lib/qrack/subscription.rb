@@ -114,9 +114,9 @@ module Qrack
       pop
     end
 
-    def start(&blk)
+    def start(opts = {}, &blk)
       setup_consumer
-      run(&blk) if blk
+      run(opts, &blk) if blk
       self
     end
   end

@@ -289,7 +289,8 @@ Returns hash {:message_count, :consumer_count}.
     def subscribe(opts = {}, &blk)
       raise "cannot resubscribe to queue #{self.name}" if @subscription
       # Create subscription
-      @subscription = Bunny::Subscription.new(client, self, opts).start(&blk)
+      @subscription = Bunny::Subscription.new(client, self, opts)
+      @subscription.start(:cancellator => opts[:cancellator], &blk)
     end
 
 =begin rdoc

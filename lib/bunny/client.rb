@@ -160,10 +160,10 @@ Exchange
           frame = channel.frame_buffer.shift
         when opts.has_key?(:timeout)
           Timeout::timeout(opts[:timeout], Qrack::ClientTimeout) do
-            frame = Qrack::Transport::Frame.parse(buffer)
+            frame = Qrack::Transport::Frame.parse(buffer, opts[:cancellator])
           end
         else
-          frame = Qrack::Transport::Frame.parse(buffer)
+          frame = Qrack::Transport::Frame.parse(buffer, opts[:cancellator])
       end
 
       @logger.info("received") { frame } if @logging
