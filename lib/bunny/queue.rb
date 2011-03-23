@@ -204,7 +204,7 @@ will be nil.
                                    :nowait => true }.merge(opts))
       )
 
-      method = client.next_method
+      method = client.next_method(:cancellator => opts[:cancellator])
 
       if method.is_a?(Qrack::Protocol::Basic::GetEmpty) then
         queue_empty = true
